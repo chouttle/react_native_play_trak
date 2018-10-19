@@ -2,11 +2,16 @@ import React from 'react';
 import firebase from 'firebase';
 import {
     Platform, Text, TextInput, Button, View, Picker, DatePickerIOS, DatePickerAndroid,
-    TimePickerAndroid, ActivityIndicator
+    TimePickerAndroid, ActivityIndicator, TouchableOpacity, ActionSheetIOS, Modal
 } from 'react-native';
+// import {Modal} from "expo";
 const baseStyles = require("../styles/baseStyles");
 
 export default class NewGamblingSession extends React.Component {
+
+    gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
+        'Lottery tickets/scratch cards', 'Other'];
+    gameModes = ['Online', 'Offline'];
 
     constructor(props) {
         super(props);
@@ -34,6 +39,7 @@ export default class NewGamblingSession extends React.Component {
             duration: 0,
             endTimeHours: currentDateTime.getHours(),
             endTimeMinutes: currentDateTime.getMinutes(),
+            startDateModalVisible: false,
             loading: false
         };
     }
@@ -70,11 +76,11 @@ export default class NewGamblingSession extends React.Component {
         // }
         // const duration = Math.floor((diff/1000)/60);
         if (this.state.duration <= 0) {
-           this.setState({
-               error: "The duration needs to be a positive number and cannot be 0.",
-               loading: false
-           });
-           return;
+            this.setState({
+                error: "The duration needs to be a positive number and cannot be 0.",
+                loading: false
+            });
+            return;
         }
 
         const newGamblingSessionRef = firebase.database().ref(gsPath).push().key;
@@ -146,31 +152,68 @@ export default class NewGamblingSession extends React.Component {
 
     _StartDatePickerComponent() {
         //TODO: for ios, it should be a button like for android, with a modal that opens onPress, and inside that modal the 'DatePickerIO'
-        if(Platform.OS === 'ios'){
-            return (
-                <DatePickerIOS
-                    date={this.state.startDate}
-                    onDateChange={(startDate) => {this.setState({startDate: startDate})}} />
-            );
-        } else if(Platform.OS === 'android'){
-            return (
+        return Platform.select({
+            ios:
+                <TouchableOpacity style={baseStyles.touchBtn} onPress={this.toggleStartDateModal.bind(this, true)}>
+                    <Text style={baseStyles.touchBtnText}>
+                        {this.state.startDate.toDateString() + " - " + this.state.startTimeHours + ":" + this.state.startTimeMinutes}
+                    </Text>
+                </TouchableOpacity>
+            ,
+            android:
                 <View style={baseStyles.buttonsView}>
                     <Button title={this.state.startDate.toDateString()} onPress={this.openAndroidStartDatePicker.bind(this)}/>
                 </View>
-            );
-        }
+        });
+    }
+
+    toggleStartDateModal(open) {
+        this.setState({startDateModalVisible: open});
+    }
+
+    showStartDateModal() {
+        this.toggleStartDateModal(true);
+    }
+
+    hideStartDateModal() {
+        this.toggleStartDateModal(false);
+    }
+
+    modalStartDateComponent() {
+        return Platform.select({
+            ios:
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.startDateModalVisible}
+                    onRequestClose={() => {
+                        // something ?
+                    }}>
+                    <View style={baseStyles.container}>
+                        <DatePickerIOS
+                            date={this.state.startDate}
+                            onDateChange={(startDate) => {
+                                this.setState({startDate: startDate});
+                                this.setState({startTimeHours: startDate.getHours()});
+                                this.setState({startTimeMinutes: startDate.getMinutes()});
+                            }}/>
+                        <View style={baseStyles.buttonsView}>
+                            <Button title="Done" containerViewStyle={{width: "auto"}} onPress={this.toggleStartDateModal.bind(this, false)}/>
+                        </View>
+                    </View>
+                </Modal>,
+            android: null
+        });
     }
 
     _StartTimePickerComponent(){
-        if(Platform.OS === 'ios'){
-            return;
-        } else if(Platform.OS === 'android'){
-            return (
+        return Platform.select({
+            ios: null,
+            android:
                 <View style={baseStyles.buttonsView}>
                     <Button title={this.state.startTimeHours + ':' + this.state.startTimeMinutes}  onPress={this.openAndroidStartTimePicker.bind(this)}/>
                 </View>
-            );
-        }
+        });
     }
 
     _DurationComponent(){
@@ -179,15 +222,34 @@ export default class NewGamblingSession extends React.Component {
         // } else if(Platform.OS === 'android'){
         return (
             <View style={baseStyles.buttonsView}>
-                <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Duration (minutes)" keyboardType="numeric" onChangeText={(duration) => this.setState({duration})}/>
+                <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Duration (minutes)" keyboardType="numeric" returnKeyType="done" onChangeText={(duration) => this.setState({duration})}/>
             </View>
         );
         // }
     }
 
+    iosPickGameType() {
+        ActionSheetIOS.showActionSheetWithOptions({
+                options: this.gameTypes
+            },
+            (buttonIndex) => {
+                this.setState({gameType: this.gameTypes[buttonIndex]})
+            });
+    }
+
+    iosPickGameMode() {
+        ActionSheetIOS.showActionSheetWithOptions({
+                options: this.gameModes
+            },
+            (buttonIndex) => {
+                this.setState({gameMode: this.gameModes[buttonIndex].toLowerCase()})
+            });
+    }
+
     render() {
         return (
             <View style={baseStyles.container}>
+                {this.modalStartDateComponent()}
                 <Text style={baseStyles.welcomeMsg}>New Gambling Session</Text>
                 {this._StartDatePickerComponent()}
                 <View style={{marginVertical: 5}}/>
@@ -200,40 +262,56 @@ export default class NewGamblingSession extends React.Component {
                 <View style={baseStyles.textInputContainer}>
                     <View style={baseStyles.textInputs}>
                         <View style={baseStyles.textInputView}>
-                            {/*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*/}
-                            <Picker
-                                prompt="Select a game mode"
-                                mode="dropdown"
-                                selectedValue={this.state.gameMode}
-                                onValueChange={(itemValue, itemIndex) => this.setState({gameMode: itemValue})}>
-                                <Picker.Item label="Select a game mode" value="" />
-                                <Picker.Item label="Online" value="online" />
-                                <Picker.Item label="Offline" value="offline" />
-                            </Picker>
+                            {Platform.select({
+                                ios:
+                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameMode.bind(this)}>
+                                        <Text style={baseStyles.touchBtnText}>
+                                            {this.state.gameMode === '' ? "Select a game mode" : this.state.gameMode.charAt(0).toUpperCase() + this.state.gameMode.substr(1)}
+                                        </Text>
+                                    </TouchableOpacity>,
+                                android:
+                                    <Picker
+                                        prompt="Select a game mode"
+                                        mode="dropdown"
+                                        selectedValue={this.state.gameMode}
+                                        onValueChange={(itemValue, itemIndex) => this.setState({gameMode: itemValue})}>
+                                        <Picker.Item label="Select a game mode" value="" />
+                                        <Picker.Item label="Online" value="online" />
+                                        <Picker.Item label="Offline" value="offline" />
+                                    </Picker>
+                            })}
                         </View>
                         <View style={baseStyles.textInputView}>
-                            {/*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*/}
-                            <Picker
-                                prompt="Select a game type"
-                                mode="dropdown"
-                                selectedValue={this.state.gameType}
-                                onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
-                                <Picker.Item label="Select a game type" value="Select a game type" />
-                                <Picker.Item label="Poker" value="Poker" />
-                                <Picker.Item label="Blackjack" value="Blackjack" />
-                                <Picker.Item label="Craps" value="Craps" />
-                                <Picker.Item label="Roulette" value="Roulette" />
-                                <Picker.Item label="Slots" value="Slots" />
-                                <Picker.Item label="Sports wagering" value="Sports wagering" />
-                                <Picker.Item label="Lottery tickets/scratch cards" value="Lottery tickets/scratch cards" />
-                                <Picker.Item label="Other" value="Other" />
-                            </Picker>
+                            {Platform.select({
+                                ios:
+                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameType.bind(this)}>
+                                        <Text style={baseStyles.touchBtnText}>
+                                            {this.state.gameType === '' ? "Select a game type" : this.state.gameType}
+                                        </Text>
+                                    </TouchableOpacity>,
+                                android:
+                                    <Picker
+                                        prompt="Select a game type"
+                                        mode="dropdown"
+                                        selectedValue={this.state.gameType}
+                                        onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
+                                        <Picker.Item label="Select a game type" value="Select a game type" />
+                                        <Picker.Item label="Poker" value="Poker" />
+                                        <Picker.Item label="Blackjack" value="Blackjack" />
+                                        <Picker.Item label="Craps" value="Craps" />
+                                        <Picker.Item label="Roulette" value="Roulette" />
+                                        <Picker.Item label="Slots" value="Slots" />
+                                        <Picker.Item label="Sports wagering" value="Sports wagering" />
+                                        <Picker.Item label="Lottery tickets/scratch cards" value="Lottery tickets/scratch cards" />
+                                        <Picker.Item label="Other" value="Other" />
+                                    </Picker>
+                            })}
                         </View>
                         <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Starting Amount" keyboardType="numeric" onChangeText={(startAmount) => this.setState({startAmount})}/>
+                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Starting Amount" keyboardType="numeric" returnKeyType="done" onChangeText={(startAmount) => this.setState({startAmount})}/>
                         </View>
                         <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Final amount" keyboardType="numeric" onChangeText={(endAmount) => this.setState({endAmount})}/>
+                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Final amount" keyboardType="numeric" returnKeyType="done" onChangeText={(endAmount) => this.setState({endAmount})}/>
                         </View>
                     </View>
                 </View>

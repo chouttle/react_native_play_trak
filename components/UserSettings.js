@@ -1,12 +1,18 @@
 import React from 'react';
 import firebase from 'firebase';
-import {Text, Button, View, Picker, ActivityIndicator} from 'react-native';
+import {Text, Button, View, Picker, ActivityIndicator, ActionSheetIOS, Platform, TouchableOpacity} from 'react-native';
 const baseStyles = require('../styles/baseStyles');
 
 export default class UserSettings extends React.Component {
+    yearsOfBirth = [];
+    yearsOfBirthPicks = [];
 
     constructor(props) {
         super(props);
+        for(let i = new Date().getFullYear() - 18; i >= 1900; i--) {
+            this.yearsOfBirth.push(i + '');
+            this.yearsOfBirthPicks.push(<Picker.Item value={i} label={i + ''} />);
+        }
         const user = firebase.auth().currentUser;
         let userSettings = {};
         const userPath = `/users/${user.uid}`;
@@ -63,40 +69,80 @@ export default class UserSettings extends React.Component {
         });
     }
 
+    iosPickGender() {
+        ActionSheetIOS.showActionSheetWithOptions({
+                options: ['Male', 'Female'],
+            },
+            (buttonIndex) => {
+                this.setState({gender: buttonIndex === 0 ? 'Male' : 'Female'})
+            });
+    }
+
+    iosPickYearOfBirth() {
+        ActionSheetIOS.showActionSheetWithOptions({
+                options: ['Cancel'].concat(this.yearsOfBirth),
+                cancelButtonIndex: 0
+            },
+            (buttonIndex) => {
+                if(buttonIndex !== 0)
+                    this.setState({yob: Number(this.yearsOfBirth[buttonIndex - 1])})
+            });
+    }
+
     render() {
-        let yearsOfBirth = [];
-        for(let i = 1900; i <= new Date().getFullYear() - 18; i++) {
-            yearsOfBirth.push(<Picker.Item value={i} label={i + ''} />);
-        };
         return (
             <View style={baseStyles.container}>
                 <Text style={baseStyles.welcomeMsg}>Modify your user settings</Text>
                 <View style={baseStyles.textInputContainer}>
                     <View style={baseStyles.textInputs}>
                         <View style={baseStyles.textInputView}>
-                            <Text style={baseStyles.centeredText}>Gender</Text>
-                            {/*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*/}
-                            <Picker
-                                prompt='Gender'
-                                mode='dropdown'
-                                selectedValue={this.state.gender}
-                                onValueChange={(itemValue, itemIndex) => this.setState({gender: itemValue})}>
-                                <Picker.Item label='Gender' value='' />
-                                <Picker.Item label='Male' value='Male' />
-                                <Picker.Item label='Female' value='Female' />
-                            </Picker>
+                            {Platform.select({
+                                ios: null,
+                                android:
+                                    <Text style={baseStyles.centeredText}>Gender</Text>
+                            })}
+                            {Platform.select({
+                                ios:
+                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGender.bind(this)}>
+                                        <Text style={baseStyles.touchBtnText}>
+                                            {this.state.gender === '' ? "Gender" : this.state.gender}
+                                        </Text>
+                                    </TouchableOpacity>,
+                                android:
+                                    <Picker
+                                        prompt='Gender'
+                                        mode='dropdown'
+                                        selectedValue={this.state.gender}
+                                        onValueChange={(itemValue, itemIndex) => this.setState({gender: itemValue})}>
+                                        <Picker.Item label='Gender' value='' />
+                                        <Picker.Item label='Male' value='Male' />
+                                        <Picker.Item label='Female' value='Female' />
+                                    </Picker>
+                            })}
                         </View>
-                        <Text  style={baseStyles.centeredText}>Date of Birth</Text>
+                        {Platform.select({
+                            ios: null,
+                            android:
+                                <Text  style={baseStyles.centeredText}>Date of Birth</Text>
+                        })}
                         <View style={[baseStyles.textInputView]}>
-                            {/*TODO: for ios, it should (probably??) be a button, with a modal that opens onPress, and inside that modal the 'Picker'*/}
-                            <Picker
-                                prompt='Year of Birth'
-                                mode='dropdown'
-                                selectedValue={this.state.yob}
-                                onValueChange={(itemValue, itemIndex) => this.setState({yob: itemValue})}>
-                                <Picker.Item label='Year of Birth' value='' />
-                                {yearsOfBirth}
-                            </Picker>
+                            {Platform.select({
+                                ios:
+                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickYearOfBirth.bind(this)}>
+                                        <Text style={baseStyles.touchBtnText}>
+                                            {this.state.yob === '' ? "Year of Birth" : "Born in " + this.state.yob}
+                                        </Text>
+                                    </TouchableOpacity>,
+                                android:
+                                    <Picker
+                                        prompt='Year of Birth'
+                                        mode='dropdown'
+                                        selectedValue={this.state.yob}
+                                        onValueChange={(itemValue, itemIndex) => this.setState({yob: itemValue})}>
+                                        <Picker.Item label='Year of Birth' value='' />
+                                        {this.yearsOfBirthPicks}
+                                    </Picker>
+                            })}
                         </View>
                     </View>
                 </View>

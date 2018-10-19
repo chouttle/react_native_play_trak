@@ -111,14 +111,6 @@ class Graphs extends React.Component {
             (buttonIndex) => {
                 this.setState({timeOrBalance: buttonIndex === 0 ? 'time' : 'balance'})
             });
-        // ActionSheetIOS.showActionSheetWithOptions({
-        //         options: ['Time spent', 'Gain/Loss'],
-        //         destructiveButtonIndex: 1,
-        //         cancelButtonIndex: 0,
-        //     },
-        //     (buttonIndex) => {
-        //         if (buttonIndex === 1) { /* destructive action */ }
-        //     });
     }
 
     // checkData() {

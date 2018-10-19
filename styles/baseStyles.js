@@ -1,3 +1,5 @@
+import {Dimensions} from "react-native";
+
 const React = require('react-native');
 const {StyleSheet} = React;
 
@@ -6,6 +8,14 @@ module.exports = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         justifyContent: 'center',
+    },
+    scrollViewContainer: {
+        backgroundColor: '#fff'
+    },
+    scrollViewHorizontal: {
+        backgroundColor: '#fff',
+        // width: window.width
+        width: Dimensions.get('window').width
     },
     viewPagerStyles: {
         flex: 1
@@ -82,8 +92,8 @@ module.exports = StyleSheet.create({
         textAlign: 'center'
     },
     homeText: {
-        lineHeight: 100,
-        fontSize: 32,
+        lineHeight: 50,
+        fontSize: 28,
         textAlign: 'center'
     },
     adviceTitles: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, View, Image, Linking, ActivityIndicator} from 'react-native';
+import {Text, View, Image, Linking, ActivityIndicator, ScrollView} from 'react-native';
 import '../assets/ic-logo.png';
 const baseStyles = require('../styles/baseStyles');
 // import firebase from 'firebase';
@@ -17,10 +17,14 @@ class About extends React.Component {
 
     render() {
         return (
+            <ScrollView style={baseStyles.scrollViewContainer}>
             <View style={baseStyles.container}>
-                <Image style={{width: 400, height: 65}}
-                       source={require('../assets/ic-logo.png')}
-                />
+                <View style={{flexDirection: 'row'}}>
+                    <Image style={{ flexShrink: 1}}
+                           resizeMode='contain'
+                           source={require('../assets/ic-logo.png')}
+                    />
+                </View>
                 <Text style={baseStyles.homeText}>About Us</Text>
                 <View style={{marginHorizontal: 40}}>
                     <Text>
@@ -40,6 +44,7 @@ class About extends React.Component {
                 </View>
                 }
             </View>
+            </ScrollView>
         );
     }
 }
