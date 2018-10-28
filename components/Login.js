@@ -3,6 +3,7 @@ import firebase from 'firebase';
 import {AsyncStorage, Text, TextInput, Button, View, ActivityIndicator} from 'react-native';
 const baseStyles = require("../styles/baseStyles");
 
+
 export default class LoginPage extends React.Component {
 
     constructor(props) {
@@ -54,7 +55,7 @@ export default class LoginPage extends React.Component {
     render() {
         return (
             <View style={baseStyles.container}>
-                <Text style={baseStyles.welcomeMsg}>Welcome to <Text style={baseStyles.pAndT}>Play&Trak</Text></Text>
+                <Text style={baseStyles.welcomeMsg}>Welcome to <Text style={baseStyles.pAndT}>Play & Trak </Text></Text>
                 <View style={baseStyles.textInputContainer}>
                     <View style={baseStyles.textInputs}>
                         <View style={baseStyles.textInputView}>
@@ -69,7 +70,7 @@ export default class LoginPage extends React.Component {
                     <Button title="Login" containerViewStyle={{width: "auto"}} onPress={this._signInAsync.bind(this)}/>
                 </View>
                 <Text style={baseStyles.centeredText}>{this.state.error}</Text>
-                <Text style={baseStyles.noAccountText}>You don't have an account? Create one!</Text>
+                <Text style={baseStyles.noAccountText}>New to Play & Trak?</Text>
                 <View style={baseStyles.buttonsView}>
                     <Button title="Register" containerViewStyle={{width: "auto", marginLeft: 0}} onPress={() => {this.props.navigation.navigate('Register');}}/>
                 </View>
