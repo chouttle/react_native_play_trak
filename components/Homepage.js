@@ -108,12 +108,12 @@ class Homepage extends React.Component {
         return (
             <View style={baseStyles.container}>
                 <Text style={baseStyles.homeText}>Overview</Text>
-                <Text style={baseStyles.centeredText}>Current balance</Text>
-                <Text style={baseStyles.centeredText}>{this.state.currentBalance}</Text>
-                <Text style={baseStyles.centeredText}>Max amount won: {this.state.maxWon}</Text>
-                <Text style={baseStyles.centeredText}>Max amount lost: {this.state.maxLost}</Text>
-                <Text style={baseStyles.centeredText}>Total playing time: {this.state.totalPlayingTime}</Text>
-                <Text style={baseStyles.centeredText}>{this.state.error}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Current balance</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.currentBalance}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Max amount won: {this.state.maxWon}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Max amount lost: {this.state.maxLost}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Total playing time: {this.state.totalPlayingTime}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
             </View>
         );
     }

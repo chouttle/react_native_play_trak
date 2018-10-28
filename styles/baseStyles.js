@@ -1,16 +1,25 @@
-import {Dimensions} from "react-native";
+import {Dimensions, Platform} from "react-native";
 
 const React = require('react-native');
 const {StyleSheet} = React;
 
+
+const placeholderTextColor = Platform.select({
+    ios: '',
+    android: 'white'
+});
+module.exports = placeholderTextColor;
 module.exports = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        // backgroundColor: '#fff'
+        backgroundColor: '#0bc5c5',
         justifyContent: 'center',
     },
     scrollViewContainer: {
-        backgroundColor: '#fff'
+        flex: 1,
+        // backgroundColor: '#fff'
+        backgroundColor: '#0bc5c5'
     },
     scrollViewHorizontal: {
         backgroundColor: '#fff',
@@ -32,24 +41,38 @@ module.exports = StyleSheet.create({
     textInputView: {
         height: 40,
         marginVertical: 10,
-        marginHorizontal: 40
+        marginHorizontal: '5%'
     },
-    textInput: {
-        fontSize: 18,
-        color: 'black',
-        textAlign: 'center',
-        borderStyle: 'solid',
-        borderColor: 'black',
-        borderWidth: 1,
-        borderRadius: 10
-    },
+    textInput: Platform.select({
+            ios: {
+                fontSize: 18,
+                color: 'black',
+                backgroundColor: 'white',
+                textAlign: 'center',
+                paddingBottom: 5,
+                paddingTop: 5,
+                // borderStyle: 'solid',
+                // borderColor: 'black',
+                // borderWidth: 1,
+                borderRadius: 10
+            },
+            android: {
+                fontSize: 18,
+                color: 'white',
+                paddingBottom: 10
+                // borderStyle: 'solid',
+                // borderColor: 'black',
+                // borderWidth: 1,
+                // borderRadius: 10
+            }
+    }),
     touchBtn: {
-        backgroundColor: 'lightblue',
+        backgroundColor: 'royalblue',
         padding: 10,
         shadowColor: '#000000',
         shadowOffset: {
             width: 0,
-            height: 3
+            height: 1
         },
         shadowRadius: 5,
         shadowOpacity: 1.0
@@ -63,7 +86,14 @@ module.exports = StyleSheet.create({
     welcomeMsg: {
         lineHeight: 100,
         fontSize: 22,
-        textAlign: 'center'
+        textAlign: 'center',
+        color: 'white'
+    },
+    titleMsg: {
+        lineHeight: 100,
+        fontSize: 28,
+        textAlign: 'center',
+        color: 'white'
     },
     pAndT: {
         color: 'red'
@@ -73,12 +103,14 @@ module.exports = StyleSheet.create({
         textAlign: 'center'
     },
     buttonsView: {
-        marginHorizontal: 80
+        marginHorizontal: '20%'
     },
     noAccountText: {
         marginTop: 30,
+        marginBottom: 10,
         lineHeight: 20,
-        textAlign: 'center'
+        textAlign: 'center',
+        color: 'white'
     },
     pickerInput: {
         borderStyle: 'solid',
@@ -88,26 +120,29 @@ module.exports = StyleSheet.create({
     },
     pickerLabel: {
         fontSize: 24,
-        color: 'black',
+        color: 'white',
         textAlign: 'center'
     },
     homeText: {
         lineHeight: 50,
         fontSize: 28,
-        textAlign: 'center'
+        textAlign: 'center',
+        color: 'white'
     },
     adviceTitles: {
         fontSize: 24,
         textAlign: 'center',
         marginHorizontal: 30,
         marginVertical: 30,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        color: 'white'
     },
     adviceText: {
         textAlign: 'center',
         marginHorizontal: 30,
         marginVertical: 30,
-        fontSize: 16
+        fontSize: 16,
+        color: 'white'
     },
     loading: {
         position: 'absolute',
@@ -118,5 +153,13 @@ module.exports = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#F5FCFF88'
+    },
+    headerTitleStyle: {
+        width: 400,
+        color: 'black'
+        // color: '#0bc5c5'
+    },
+    whiteText: {
+        color: 'white'
     }
 });

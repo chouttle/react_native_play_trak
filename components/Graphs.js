@@ -124,7 +124,7 @@ class Graphs extends React.Component {
         const axesSvgY = { fontSize: 10, fill: 'black', fontWeight: 'bold', originY: 80 };
         const verticalContentInset = { top: 10, bottom: 10 };
         const xAxisHeight = 30;
-        return <View>
+        return <View style={baseStyles.container}>
             {/*<View style={baseStyles.textInputView}>*/}
             {/*/!*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*!/*/}
             {/*<Picker*/}
@@ -142,34 +142,39 @@ class Graphs extends React.Component {
                 {Platform.select({
                     ios:
                         <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickTimeOrBalance.bind(this)}>
-                            <Text style={baseStyles.touchBtnText}>
+                            <Text style={[baseStyles.touchBtnText, baseStyles.whiteText]}>
                                 {this.state.timeOrBalance === 'time' ? "Time spent" : "Gain/Loss"}
                             </Text>
                         </TouchableOpacity>,
                     android:
                         <Picker
+                            style={baseStyles.whiteText}
                             mode='dropdown'
                             selectedValue={this.state.timeOrBalance}
                             onValueChange={(itemValue, itemIndex) => this.setState({timeOrBalance: itemValue})}>
                             <Picker.Item label='Time spent' value='time'/>
-                            <Picker.Item label='Gain/Loss' value='balance'/>
+                            <Picker.Item style={baseStyles.whiteText} label='Gain/Loss' value='balance'/>
                         </Picker>
                 })}
 
             </View>
             {/*Example for axis with values: https://stackoverflow.com/questions/52459901/how-to-display-vertical-grid-with-time-series-data-using-react-native-svg-charts*/}
             <View style={{
-                height: 300,
+                height: 270,
+                backgroundColor: 'white',
                 padding: 20,
                 flexDirection: 'row',
                 borderWidth: 2,
                 borderStyle: 'solid',
-                borderColor: 'transparent'
+                borderColor: 'transparent',
+                borderRadius: 10,
+                margin: 5
             }}>
                 <YAxis
                     data={this.state.listSessions}
                     style={{
                         marginBottom: xAxisHeight,
+                        backgroundColor: 'white',
                         width: 50,
                         height: 200,
                         borderWidth: 2,
@@ -187,13 +192,14 @@ class Graphs extends React.Component {
                 <View style={{
                     flex: 1,
                     marginLeft: 10,
-                    height: 250,
+                    backgroundColor: 'white',
+                    // height: 250,
                     borderWidth: 2,
                     borderStyle: 'solid',
                     borderColor: 'transparent'
                 }}>
                     <LineChart
-                        style={{height: 200}}
+                        style={{backgroundColor: 'white', height: 200}}
                         data={this.state.listSessions}
                         yAccessor={({item}) => this.state.timeOrBalance === 'time' ? item.duration : item.outcome}
                         xAccessor={({index}) => index}

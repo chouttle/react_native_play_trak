@@ -99,31 +99,32 @@ export default class UserSettings extends React.Component {
                             {Platform.select({
                                 ios: null,
                                 android:
-                                    <Text style={baseStyles.centeredText}>Gender</Text>
+                                    <Text style={[baseStyles.touchBtnText, baseStyles.whiteText]}>Gender</Text>
                             })}
                             {Platform.select({
                                 ios:
                                     <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGender.bind(this)}>
-                                        <Text style={baseStyles.touchBtnText}>
+                                        <Text style={[baseStyles.touchBtnText, baseStyles.whiteText]}>
                                             {this.state.gender === '' ? "Gender" : this.state.gender}
                                         </Text>
                                     </TouchableOpacity>,
                                 android:
                                     <Picker
+                                        style={baseStyles.whiteText}
                                         prompt='Gender'
                                         mode='dropdown'
                                         selectedValue={this.state.gender}
                                         onValueChange={(itemValue, itemIndex) => this.setState({gender: itemValue})}>
-                                        <Picker.Item label='Gender' value='' />
-                                        <Picker.Item label='Male' value='Male' />
-                                        <Picker.Item label='Female' value='Female' />
+                                        <Picker.Item style={baseStyles.whiteText} label='Gender' value='' />
+                                        <Picker.Item style={baseStyles.whiteText} label='Male' value='Male' />
+                                        <Picker.Item style={baseStyles.whiteText} label='Female' value='Female' />
                                     </Picker>
                             })}
                         </View>
                         {Platform.select({
                             ios: null,
                             android:
-                                <Text  style={baseStyles.centeredText}>Date of Birth</Text>
+                                <Text  style={[baseStyles.touchBtnText, baseStyles.whiteText]}>Date of Birth</Text>
                         })}
                         <View style={[baseStyles.textInputView]}>
                             {Platform.select({
@@ -135,11 +136,12 @@ export default class UserSettings extends React.Component {
                                     </TouchableOpacity>,
                                 android:
                                     <Picker
+                                        style={baseStyles.whiteText}
                                         prompt='Year of Birth'
                                         mode='dropdown'
                                         selectedValue={this.state.yob}
                                         onValueChange={(itemValue, itemIndex) => this.setState({yob: itemValue})}>
-                                        <Picker.Item label='Year of Birth' value='' />
+                                        <Picker.Item style={baseStyles.whiteText} label='Year of Birth' value='' />
                                         {this.yearsOfBirthPicks}
                                     </Picker>
                             })}

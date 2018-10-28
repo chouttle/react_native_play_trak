@@ -1,5 +1,5 @@
 import React from 'react';
-import {ActivityIndicator, Button, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, Button, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View} from 'react-native';
 import firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 
@@ -142,44 +142,48 @@ class DailyStats extends React.Component {
     //cannot be static!
     outcomeColor(outcome) {
         if(outcome === 0){
-            return 'black';
+            return 'white';
         } else if(outcome > 0){
             return 'green';
         } else if(outcome < 0){
             return 'red';
+        } else {
+            return 'white'
         }
     }
 
     render() {
         return (
-            <View style={baseStyles.container}>
-                <Text style={baseStyles.homeText}>Today</Text>
-                <Text style={baseStyles.centeredText}>Sum of starting amounts: {this.state.startingAmount || 'No data'}</Text>
-                <Text style={baseStyles.centeredText}>Sum of ending amounts: {this.state.endingAmount || 'No data'}</Text>
-                <Text style={baseStyles.centeredText}>
-                    Outcome: <Text style={{color: this.outcomeColor(this.state.outcome)}}>{this.state.outcome || 'No outcome'}</Text>
-                </Text>
+            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
+                <ScrollView style={baseStyles.scrollViewContainer}>
+                    <Text style={baseStyles.homeText}>Today</Text>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Sum of starting amounts: {this.state.startingAmount || 'No data'}</Text>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Sum of ending amounts: {this.state.endingAmount || 'No data'}</Text>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>
+                        Outcome: <Text style={{color: this.outcomeColor(this.state.outcome)}}>{this.state.outcome || 'No outcome'}</Text>
+                    </Text>
 
 
-                <Text style={[baseStyles.welcomeMsg, baseStyles.centeredText]}>Update your daily limits: </Text>
-                <Text style={baseStyles.centeredText}>Daily budget limit ($)</Text>
-                <View style={baseStyles.textInputView}>
-                    <TextInput style={baseStyles.textInput} underlineColorAndroid='white' placeholder='Budget Limit ($)' value={this.state.budgetLimit + ''} onChangeText={(budgetLimit) => this.setState({budgetLimit})}/>
-                </View>
-                <Text style={baseStyles.centeredText}>Daily time limit (minutes)</Text>
-                <View style={baseStyles.textInputView}>
-                    <TextInput style={baseStyles.textInput} underlineColorAndroid='white' placeholder='Time Limit (minutes)' value={this.state.timeLimit + ''} onChangeText={(timeLimit) => this.setState({timeLimit})}/>
-                </View>
-                <View style={baseStyles.buttonsView}>
-                    <Button title='Update the limits' onPress={this.updateLimits.bind(this)}/>
-                </View>
-                <Text style={baseStyles.centeredText}>{this.state.error}</Text>
-                {this.state.loading &&
-                <View style={baseStyles.loading}>
-                    <ActivityIndicator size='large' />
-                </View>
-                }
-            </View>
+                    <Text style={[baseStyles.welcomeMsg, baseStyles.centeredText]}>Update your daily limits: </Text>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily budget limit ($)</Text>
+                    <View style={baseStyles.textInputView}>
+                        <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Budget Limit ($)' keyboardType="numeric" returnKeyType="done" value={this.state.budgetLimit + ''} onChangeText={(budgetLimit) => this.setState({budgetLimit})}/>
+                    </View>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily time limit (minutes)</Text>
+                    <View style={baseStyles.textInputView}>
+                        <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Time Limit (minutes)' keyboardType="numeric" returnKeyType="done" value={this.state.timeLimit + ''} onChangeText={(timeLimit) => this.setState({timeLimit})}/>
+                    </View>
+                    <View style={baseStyles.buttonsView}>
+                        <Button title='Update the limits' onPress={this.updateLimits.bind(this)}/>
+                    </View>
+                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
+                    {this.state.loading &&
+                    <View style={baseStyles.loading}>
+                        <ActivityIndicator size='large' />
+                    </View>
+                    }
+                </ScrollView>
+            </KeyboardAvoidingView>
         );
     }
 }

@@ -1,8 +1,8 @@
 import React from 'react';
 import firebase from 'firebase';
 import {
-    Platform, Text, TextInput, Button, View, Picker, DatePickerIOS, DatePickerAndroid,
-    TimePickerAndroid, ActivityIndicator, TouchableOpacity, ActionSheetIOS, Modal
+    Alert, Platform, Text, TextInput, Button, View, Picker, DatePickerIOS, DatePickerAndroid,
+    TimePickerAndroid, ActivityIndicator, TouchableOpacity, ActionSheetIOS, Modal, KeyboardAvoidingView, ScrollView
 } from 'react-native';
 // import {Modal} from "expo";
 const baseStyles = require("../styles/baseStyles");
@@ -25,7 +25,12 @@ export default class NewGamblingSession extends React.Component {
 
         this.state = {
             user: user,
-            userSettings: {},
+            budgetLimit: '',
+            timeLimit: '',
+            previousSessions: [],
+            todayTotalDuration: 0,
+            todayTotalStartingAmounts: 0,
+            totalNumSessions: 0,
             startAmount: 0,
             endAmount: 0,
             gameMode: '',
@@ -100,22 +105,166 @@ export default class NewGamblingSession extends React.Component {
             startingAmount: this.state.startAmount,
             uid: this.state.user.uid
         }).then(() => {
-            this.setState({
-                error: 'Success!',
-                loading: false
+            // this.setState({
+            //     error: 'Success!',
+            //     loading: false
+            // });
+            // Alert.alert("Congratulations",
+            //     "You have gambled",
+            //     [
+            //         {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+            //         {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+            //         {text: 'OK', onPress: () => console.log('OK Pressed')}
+            //     ],
+            //     { cancelable: false });
+            this.loadDataForAlert().then(() => {
+                this.alertDailyLimits();
+                this.alertNormativeFeedback();
             });
             setTimeout(() => {
                 this.setState({
                     error: '',
                     loading: false
                 });
-            }, 5000)
+            }, 500000)
         }).catch((error) => {
             this.setState({
                 error: 'Error: ' + error,
                 loading: false
             });
         });
+    }
+
+    loadDataForAlert() {
+        console.log("Entering loadDataForAlerts");
+        const gsPath = `/gamblingSession`;
+        return firebase.database().ref(gsPath).orderByChild('uid').equalTo(this.state.user.uid).once('value').then((snapshot) => {
+            snapshot.forEach((session) => {
+                if(session.val().date.length <= 10){
+                    this.setState({ previousSession: this.state.previousSessions.push({
+                            date: session.val().date || 'No date',
+                            game: session.val().game || 'No game',
+                            duration: session.val().duration || '?',
+                            startingAmount: session.val().startingAmount || '?',
+                            finalAmount: session.val().finalAmount || '?',
+                            outcome: session.val().outcome || '?'
+                        })
+                    });
+                    if(session.val().date === (new Date()).getFullYear() + '-' + ((new Date()).getMonth() + 1) + '-' + (new Date()).getDate()) {
+                        this.setState({todayTotalDuration: this.state.todayTotalDuration + session.val().duration});
+                        this.setState({todayTotalStartingAmounts: this.state.todayTotalStartingAmounts + session.val().startingAmount});
+                    }
+                    this.setState({totalNumSessions: this.state.totalNumSessions + 1});
+                }
+            });
+            this.setState({previousSessions: this.state.previousSessions.sort(this.sortSessionsByLatestDate)});
+            this.setState({
+                error: '',
+                loading: false
+            });
+            console.log("Leaving loadDataForAlerts");
+            return 0;
+        }).catch((error) => {
+            this.setState({
+                error: 'Could not load the data: ' + error,
+                loading: false
+            });
+        });
+    }
+
+    sortSessionsByLatestDate(a,b) {
+        if (new Date(a.date) > new Date(b.date))
+            return -1;
+        if (new Date(a.date) < new Date(b.date))
+            return 1;
+        return 0;
+    }
+
+
+    alertDailyLimits() {
+        console.log("Entering alertDailyLimits");
+        console.log("this.state.todayTotalDuration");
+        console.log(this.state.todayTotalDuration);
+        const userPath = `/users/${this.state.user.uid}`;
+        firebase.database().ref(userPath).once('value').then((snapshot) => {
+            const userSettings = snapshot.val();
+            this.setState({
+                budgetLimit: userSettings.dailyLimit || '0',
+                timeLimit: userSettings.dailyTimeLimit || '0',
+                error: '',
+                loading: false
+            });
+            const overBudget = (0 - this.state.budgetLimit) > this.state.todayTotalStartingAmounts;
+            const overTime = this.state.timeLimit < this.state.todayTotalDuration;
+            console.log("overBudget: " + overBudget + " and overTime: " + overTime);
+            if(overBudget && overTime) {
+                Alert.alert("Daily limits exceeded",
+                    "WARNING: You have exceeded your daily budget and time limit:\n" +
+                    "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.\n" +
+                    "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
+                    [{text: "OK"}])
+            } else if(overBudget) {
+                Alert.alert("Daily budget exceeded",
+                    "WARNING: You have exceeded your daily budget:\n" +
+                    "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.",
+                    [{text: "OK"}])
+            } else if(overTime) {
+                Alert.alert("Daily time limit exceeded",
+                    "WARNING: You have exceeded your daily time limit:\n" +
+                    "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
+                    [{text: "OK"}])
+            }
+        }).catch((error) => {
+            this.setState({
+                error: 'Could not load user limits: ' + error,
+                loading: false
+            })
+        });
+    }
+
+    alertNormativeFeedback() {
+        console.log("Entered Normativefeedback alert");
+        this.setState({
+            error: '',
+            loading: false
+        });
+        const freq = 5;
+        if(this.state.totalNumSessions === freq) {
+            let totalAmount = 0;
+            for(let i = 0; i < freq; i++) {
+                totalAmount += Number(this.state.previousSessions[i].startingAmount);
+            }
+            const averageAmount = totalAmount / freq;
+            if(averageAmount < -50) {
+                console.log("first Normativefeedback alert > 50");
+                Alert.alert("Information",
+                    "This is the second time you gamble. People your age and gender tend to gamble around $" + Math.floor(0.75 * averageAmount) +
+                    " per session while you have gambled on average $" + averageAmount + ".",
+                    [{text: "OK"}])
+            }
+        } else if(this.state.totalNumSessions > freq && this.state.totalNumSessions % freq === 0) {
+            let totalMostRecent = 0;
+            let totalLeastRecent = 0;
+            for(let i = 0; i < freq; i++) {
+                totalMostRecent += Number(this.state.previousSessions[i].startingAmount);
+            }
+            for(let i = freq; i < 2*freq; i++) {
+                totalLeastRecent += Number(this.state.previousSessions[i].startingAmount);
+            }
+            if(totalMostRecent > totalLeastRecent) {
+                console.log("gambling going up alert");
+                Alert.alert("Slow down!",
+                    "You have gambled more ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                    " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                    [{text: "OK"}])
+            } else if(totalMostRecent < totalLeastRecent) {
+                console.log("gambling going down alert");
+                Alert.alert("Good job!",
+                    "You have gambled less ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                    " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                    [{text: "OK"}])
+            }
+        }
     }
 
     async openAndroidStartTimePicker(){
@@ -222,7 +371,7 @@ export default class NewGamblingSession extends React.Component {
         // } else if(Platform.OS === 'android'){
         return (
             <View style={baseStyles.buttonsView}>
-                <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Duration (minutes)" keyboardType="numeric" returnKeyType="done" onChangeText={(duration) => this.setState({duration})}/>
+                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Duration (minutes)" keyboardType="numeric" returnKeyType="done" onChangeText={(duration) => this.setState({duration})}/>
             </View>
         );
         // }
@@ -248,83 +397,86 @@ export default class NewGamblingSession extends React.Component {
 
     render() {
         return (
-            <View style={baseStyles.container}>
-                {this.modalStartDateComponent()}
-                <Text style={baseStyles.welcomeMsg}>New Gambling Session</Text>
-                {this._StartDatePickerComponent()}
-                <View style={{marginVertical: 5}}/>
-                {this._StartTimePickerComponent()}
-                {/*<View style={{marginVertical: 5}}/>*/}
-                {/*{this._EndDatePickerComponent()}*/}
-                <View style={{marginVertical: 5}}/>
-                {this._DurationComponent()}
+            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
+                <ScrollView style={baseStyles.scrollViewContainer}>
+                    {this.modalStartDateComponent()}
+                    <View style={{ flex: 1, height: 50}}></View>
+                    {/*<Text style={baseStyles.welcomeMsg}>New Gambling Session</Text>*/}
+                    {this._StartDatePickerComponent()}
+                    <View style={{marginVertical: 5}}/>
+                    {this._StartTimePickerComponent()}
+                    {/*<View style={{marginVertical: 5}}/>*/}
+                    {/*{this._EndDatePickerComponent()}*/}
+                    <View style={{marginVertical: 5}}/>
+                    {this._DurationComponent()}
 
-                <View style={baseStyles.textInputContainer}>
-                    <View style={baseStyles.textInputs}>
-                        <View style={baseStyles.textInputView}>
-                            {Platform.select({
-                                ios:
-                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameMode.bind(this)}>
-                                        <Text style={baseStyles.touchBtnText}>
-                                            {this.state.gameMode === '' ? "Select a game mode" : this.state.gameMode.charAt(0).toUpperCase() + this.state.gameMode.substr(1)}
-                                        </Text>
-                                    </TouchableOpacity>,
-                                android:
-                                    <Picker
-                                        prompt="Select a game mode"
-                                        mode="dropdown"
-                                        selectedValue={this.state.gameMode}
-                                        onValueChange={(itemValue, itemIndex) => this.setState({gameMode: itemValue})}>
-                                        <Picker.Item label="Select a game mode" value="" />
-                                        <Picker.Item label="Online" value="online" />
-                                        <Picker.Item label="Offline" value="offline" />
-                                    </Picker>
-                            })}
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            {Platform.select({
-                                ios:
-                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameType.bind(this)}>
-                                        <Text style={baseStyles.touchBtnText}>
-                                            {this.state.gameType === '' ? "Select a game type" : this.state.gameType}
-                                        </Text>
-                                    </TouchableOpacity>,
-                                android:
-                                    <Picker
-                                        prompt="Select a game type"
-                                        mode="dropdown"
-                                        selectedValue={this.state.gameType}
-                                        onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
-                                        <Picker.Item label="Select a game type" value="Select a game type" />
-                                        <Picker.Item label="Poker" value="Poker" />
-                                        <Picker.Item label="Blackjack" value="Blackjack" />
-                                        <Picker.Item label="Craps" value="Craps" />
-                                        <Picker.Item label="Roulette" value="Roulette" />
-                                        <Picker.Item label="Slots" value="Slots" />
-                                        <Picker.Item label="Sports wagering" value="Sports wagering" />
-                                        <Picker.Item label="Lottery tickets/scratch cards" value="Lottery tickets/scratch cards" />
-                                        <Picker.Item label="Other" value="Other" />
-                                    </Picker>
-                            })}
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Starting Amount" keyboardType="numeric" returnKeyType="done" onChangeText={(startAmount) => this.setState({startAmount})}/>
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid="white" placeholder="Final amount" keyboardType="numeric" returnKeyType="done" onChangeText={(endAmount) => this.setState({endAmount})}/>
+                    <View style={baseStyles.textInputContainer}>
+                        <View style={baseStyles.textInputs}>
+                            <View style={baseStyles.textInputView}>
+                                {Platform.select({
+                                    ios:
+                                        <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameMode.bind(this)}>
+                                            <Text style={baseStyles.touchBtnText}>
+                                                {this.state.gameMode === '' ? "Select a game mode" : this.state.gameMode.charAt(0).toUpperCase() + this.state.gameMode.substr(1)}
+                                            </Text>
+                                        </TouchableOpacity>,
+                                    android:
+                                        <Picker
+                                            prompt="Select a game mode"
+                                            mode="dropdown"
+                                            selectedValue={this.state.gameMode}
+                                            onValueChange={(itemValue, itemIndex) => this.setState({gameMode: itemValue})}>
+                                            <Picker.Item style={baseStyles.whiteText} label="Select a game mode" value="" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Online" value="online" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Offline" value="offline" />
+                                        </Picker>
+                                })}
+                            </View>
+                            <View style={baseStyles.textInputView}>
+                                {Platform.select({
+                                    ios:
+                                        <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGameType.bind(this)}>
+                                            <Text style={baseStyles.touchBtnText}>
+                                                {this.state.gameType === '' ? "Select a game type" : this.state.gameType}
+                                            </Text>
+                                        </TouchableOpacity>,
+                                    android:
+                                        <Picker
+                                            prompt="Select a game type"
+                                            mode="dropdown"
+                                            selectedValue={this.state.gameType}
+                                            onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
+                                            <Picker.Item style={baseStyles.whiteText} label="Select a game type" value="Select a game type" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Poker" value="Poker" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Blackjack" value="Blackjack" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Craps" value="Craps" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Roulette" value="Roulette" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Slots" value="Slots" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Sports wagering" value="Sports wagering" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Lottery tickets/scratch cards" value="Lottery tickets/scratch cards" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Other" value="Other" />
+                                        </Picker>
+                                })}
+                            </View>
+                            <View style={baseStyles.textInputView}>
+                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Starting Amount" keyboardType="numeric" returnKeyType="done" onChangeText={(startAmount) => this.setState({startAmount})}/>
+                            </View>
+                            <View style={baseStyles.textInputView}>
+                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Final amount" keyboardType="numeric" returnKeyType="done" onChangeText={(endAmount) => this.setState({endAmount})}/>
+                            </View>
                         </View>
                     </View>
-                </View>
-                <View style={baseStyles.buttonsView}>
-                    <Button title="Submit game session" containerViewStyle={{width: "auto"}} onPress={this.saveNewGamblingSession.bind(this)}/>
-                </View>
-                <Text style={baseStyles.centeredText}>{this.state.error}</Text>
+                    <View style={baseStyles.buttonsView}>
+                        <Button title="Submit game session" containerViewStyle={{width: "auto"}} onPress={this.saveNewGamblingSession.bind(this)}/>
+                    </View>
+                    <Text style={baseStyles.centeredText}>{this.state.error}</Text>
+                </ScrollView>
                 {this.state.loading &&
                 <View style={baseStyles.loading}>
                     <ActivityIndicator size='large' />
                 </View>
                 }
-            </View>
+            </KeyboardAvoidingView>
         );
     }
 }

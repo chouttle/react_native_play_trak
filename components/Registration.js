@@ -111,10 +111,10 @@ export default class Registration extends React.Component {
                 <View style={baseStyles.textInputContainer}>
                     <View style={baseStyles.textInputs}>
                         <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid='white' placeholder='User Email' onChangeText={(email) => this.setState({email})}/>
+                            <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='User Email' onChangeText={(email) => this.setState({email})}/>
                         </View>
                         <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} underlineColorAndroid='white' placeholder='Password' secureTextEntry={true} onChangeText={(password) => this.setState({password})}/>
+                            <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Password' secureTextEntry={true} onChangeText={(password) => this.setState({password})}/>
                         </View>
                         <View style={baseStyles.textInputView}>
                             {Platform.select({

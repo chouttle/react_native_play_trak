@@ -1,6 +1,7 @@
 import React from 'react';
-import {Text, View, FlatList, ActivityIndicator} from 'react-native';
+import {Alert, Text, View, FlatList, ActivityIndicator} from 'react-native';
 import firebase from 'firebase';
+import {Icon} from "react-native-elements";
 const baseStyles = require('../styles/baseStyles');
 
 class SessionHistory extends React.Component {
@@ -23,6 +24,7 @@ class SessionHistory extends React.Component {
             snapshot.forEach((session) => {
                 if(session.val().date.length <= 10){
                     this.setState({ previousSession: this.state.previousSessions.push({
+                            id: session.key || 'No id',
                             date: session.val().date || 'No date',
                             game: session.val().game || 'No game',
                             duration: session.val().duration || '?',
@@ -45,46 +47,54 @@ class SessionHistory extends React.Component {
     //cannot be static!
     outcomeColor(outcome) {
         if(outcome === 0){
-            return 'black';
+            return 'white';
         } else if(outcome > 0){
             return 'green';
         } else if(outcome < 0){
             return 'red';
+        } else {
+            return 'white';
         }
     }
 
     render() {
         return (
             <View style={baseStyles.container}>
-                <Text style={baseStyles.homeText}>Session History</Text>
-                <Text style={baseStyles.centeredText}>{this.state.error}</Text>
+                {/*<Text style={baseStyles.homeText}>Session History</Text>*/}
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
                 <View style={{flexDirection: 'row'}}>
-                    <View style={{flex: 0.1, alignSelf: 'stretch'}}/>{/*margin on the left*/}
+                    <View style={{flex: 0.05, alignSelf: 'stretch'}}/>{/*margin on the left*/}
+                    <View style={{flex: 0.3, alignSelf: 'stretch'}}/>
+                    <View style={{flex: 0.05, alignSelf: 'stretch'}}/>{/*margin on the left*/}
                     <View style={{flex: 1, alignSelf: 'stretch'}}>
-                        <Text style={{fontWeight: 'bold'}}>Date</Text>
+                        <Text style={[{fontWeight: 'bold'}, baseStyles.whiteText]}>Date</Text>
                     </View>
-                    <View style={{flex: 2, alignSelf: 'stretch'}}>
-                        <Text style={{fontWeight: 'bold'}}>Game</Text>
-                    </View>
-                    <View style={{flex: 1, alignSelf: 'stretch'}}>
-                        <Text style={{fontWeight: 'bold'}}>Duration</Text>
+                    <View style={{flex: 1.5, alignSelf: 'stretch'}}>
+                        <Text style={[{fontWeight: 'bold'}, baseStyles.whiteText]}>Game</Text>
                     </View>
                     <View style={{flex: 1, alignSelf: 'stretch'}}>
-                        <Text style={{fontWeight: 'bold'}}>Outcome</Text>
+                        <Text style={[{fontWeight: 'bold'}, baseStyles.whiteText]}>Duration</Text>
+                    </View>
+                    <View style={{flex: 1, alignSelf: 'stretch'}}>
+                        <Text style={[{fontWeight: 'bold'}, baseStyles.whiteText]}>Outcome</Text>
                     </View>
                 </View>
                 <FlatList data={this.state.previousSessions}
                           renderItem={({item}) =>
-                              <View style={{flex: 1, alignSelf: 'stretch', flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'black'}}>
-                                  <View style={{flex: 0.1, alignSelf: 'stretch'}}/>{/*margin on the left*/}
-                                  <View style={{flex: 1, alignSelf: 'stretch'}}>
-                                      <Text>{item.date || 'No date'}</Text>
+                              <View style={{flex: 1, alignSelf: 'stretch', flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'white'}}>
+                                  <View style={{flex: 0.05, alignSelf: 'stretch'}}/>{/*margin on the left*/}
+                                  <View style={{flex: 0.3, alignSelf: 'stretch'}}>
+                                      <Icon name="edit" color="white" onPress={() => Alert.alert('Alert', 'this is an alert: ' + item.id)}/>
                                   </View>
-                                  <View style={{flex: 2, alignSelf: 'stretch'}}>
-                                      <Text>{item.game || 'No game'}</Text>
+                                  <View style={{flex: 0.05, alignSelf: 'stretch'}}/>{/*margin on the left*/}
+                                  <View style={{flex: 1, alignSelf: 'stretch'}}>
+                                      <Text style={baseStyles.whiteText}>{item.date || 'No date'}</Text>
+                                  </View>
+                                  <View style={{flex: 1.5, alignSelf: 'stretch'}}>
+                                      <Text style={baseStyles.whiteText}>{item.game || 'No game'}</Text>
                                   </View>
                                   <View style={{flex: 1, alignSelf: 'stretch'}}>
-                                      <Text>{item.duration || 'No duration'}</Text>
+                                      <Text style={baseStyles.whiteText}>{item.duration || 'No duration'}</Text>
                                   </View>
                                   <View style={{flex: 1, alignSelf: 'stretch'}}>
                                       <Text style={{color: this.outcomeColor(item.outcome)}}>{item.outcome || 'No outcome'}</Text>

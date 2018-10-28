@@ -13,6 +13,7 @@ import Advice from "./components/Advice";
 import About from "./components/About";
 import {Icon} from "react-native-elements";
 import Graphs from "./components/Graphs";
+import CalendarStats from "./components/CalendarStats";
 const baseStyles = require("./styles/baseStyles");
 
 export class DrawerComponent extends React.Component {
@@ -43,7 +44,7 @@ const HomepageStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'Home',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -54,7 +55,7 @@ const UserSettingsStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'User Settings',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -65,7 +66,7 @@ const NewGamblingSessionStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'New Gambling Session',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -76,7 +77,7 @@ const SessionHistoryStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'Session History',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -87,7 +88,18 @@ const DailyStatsStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'Daily Stats',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
+        })
+    }
+});
+
+const CalendarStatsStack = StackNavigator({
+    CalendarStats: {
+        screen: CalendarStats,
+        navigationOptions: ({ navigation }) => ({
+            title: 'Calendar',
+            headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -98,7 +110,7 @@ const GraphsStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'Graphs',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -109,7 +121,7 @@ const AdviceStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'Advice',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -120,7 +132,7 @@ const AboutStack = StackNavigator({
         navigationOptions: ({ navigation }) => ({
             title: 'About',
             headerLeft: <View style={{marginLeft: 10}}><Icon name="menu" size={35} onPress={() => navigation.navigate('DrawerOpen') }/></View>,
-            headerTitleStyle : { width: 400 }
+            headerTitleStyle : baseStyles.headerTitleStyle
         })
     }
 });
@@ -141,6 +153,9 @@ const AppStack = DrawerNavigator(
         },
         DailyStats: {
             screen: DailyStatsStack
+        },
+        CalendarStats: {
+            screen: CalendarStatsStack
         },
         Graphs: {
             screen: GraphsStack
@@ -168,18 +183,14 @@ const AuthStack = StackNavigator(
             screen: LoginPage,
             navigationOptions: {
                 title: 'Login',
-                headerTitleStyle :{
-                    width: 400
-                }
+                headerTitleStyle : baseStyles.headerTitleStyle
             }
         },
         Register: {
             screen: RegisterPage,
             navigationOptions: {
                 title: 'Register',
-                headerTitleStyle :{
-                    width: 400
-                }
+                headerTitleStyle : baseStyles.headerTitleStyle
             },
             headerBackTitle: 'Back'
         }
