@@ -1,39 +1,122 @@
+import firebase from 'firebase';
+const baseStyles = require('../styles/baseStyles');
 import React from 'react';
 import {
-    Text,
-    TextInput,
-    Button,
-    View,
-    Picker,
-    AsyncStorage,
-    ActivityIndicator,
-    Platform,
-    TouchableOpacity, ActionSheetIOS
+  StyleSheet,
+  Alert,
+  View,
+  Text,
+  Image,
+  TextInput,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+  Button
 } from 'react-native';
-const baseStyles = require('../styles/baseStyles');
-import firebase from 'firebase';
+
+import FormValidation from 'tcomb-form-native'
+
+const Form = FormValidation.form.Form;
+
+const formStyles = {
+  ...Form.stylesheet,
+  formGroup: {
+    normal: {
+      marginBottom: 10
+    },
+  },
+  controlLabel: {
+    normal: {
+      color: "#4267b2",
+      fontSize: 18,
+      marginBottom: 7,
+      fontWeight: '600'
+    },
+    // Style applied when a validation error occours
+    error: {
+      color: 'red',
+      fontSize: 18,
+      marginBottom: 7,
+      fontWeight: '600'
+    }
+  }
+}
 
 export default class Registration extends React.Component {
 
-    yearsOfBirth = [];
-    yearsOfBirthPicks = [];
+  constructor(props) {
+    super(props);
 
-    constructor(props) {
-        super(props);
-        for(let i = new Date().getFullYear() - 18; i >= 1900; i--) {
-            this.yearsOfBirth.push(i + '');
-            this.yearsOfBirthPicks.push(<Picker.Item value={i} label={i + ''} />);
+    // Email Validation
+    let valid_email = FormValidation.refinement(
+      FormValidation.String, function (email) {
+        var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+        return re.test(email);
+      }
+    );
+
+    // Password Validation - Min of 6 chars
+    let valid_password = FormValidation.refinement(
+      FormValidation.String, function (password) {
+        return password.length >= 6;
+      }
+    );
+
+    // Year Validation
+    let valid_year_of_birth = FormValidation.refinement(
+        FormValidation.String, function (str ) {
+            let num = Number(str)
+            // Needs to be an integer, no floating point edge case
+            if (!Number.isInteger(num)) {
+                return false;
+            }
+            return 1900 <= num && num <= 2018;
         }
-        const { params } = this.props.navigation.state;
-        this.state = {
-            email: '',
-            password: '',
-            gender: '',
-            yob: '',
-            error: '',
-            loading: false
-        }
+    );
+    // Enums implemented as a picker
+    let valid_gender = FormValidation.enums({
+        M: "Male",
+        F: "Female"
+    });
+
+    let form_fields = FormValidation.struct({
+        Email: valid_email,
+        Password: valid_password,
+        Year: valid_year_of_birth,
+        Gender: valid_gender
+      })
+
+    // Initial state
+    this.state = {
+      loading: false,
+      error: '',
+      email: '',
+      password: '',
+      gender: '',
+      year: '',
+      form_fields: form_fields,
+      form_values: {},
+      form_options: this.getFormOptions()
     }
+  }
+
+  getFormOptions () {
+      let form_options =  {
+        fields: {
+          Email: { error: 'Please enter a valid email' },
+          Year: { error: 'Please enter a valid year' },
+          Password: {
+            error: 'Your password must be at least 6 characters',
+            secureTextEntry: true,
+          },
+          Gender: {
+              error: "Please select your gender"
+          }
+        },
+        stylesheet: formStyles
+      };
+      return form_options;
+  }
 
     createUserInFirebase(){
         this.setState({
@@ -48,7 +131,7 @@ export default class Registration extends React.Component {
             this.writeUserData(authData.uid);
         }).catch((error) => {
             this.setState({
-                error: 'Could not login: ' + error,
+                error: error,
                 loading: false
             });
         });
@@ -61,9 +144,10 @@ export default class Registration extends React.Component {
         });
         const userPath = `/users/${uid}`;
         const userSettings = {
-            yob: this.state.yob,
+            yob: this.state.year,
             sex: this.state.gender
         };
+
         firebase.database().ref(userPath).set(userSettings).then(async () => {
             try{
                 await AsyncStorage.setItem('userToken', uid);
@@ -86,89 +170,69 @@ export default class Registration extends React.Component {
         });
     }
 
-    iosPickGender() {
-        ActionSheetIOS.showActionSheetWithOptions({
-                options: ['Male', 'Female'],
-            },
-            (buttonIndex) => {
-                this.setState({gender: buttonIndex === 0 ? 'Male' : 'Female'})
-            });
-    }
+  render() {
+    return (
+      <View style={styles.container}>
+      <ScrollView>
+      <Form
+          ref="form"
+          type={this.state.form_fields}
+          value={this.state.form_values}
+          options={this.state.form_options} />
 
-    iosPickYearOfBirth() {
-        ActionSheetIOS.showActionSheetWithOptions({
-                options: this.yearsOfBirth,
-            },
-            (buttonIndex) => {
-                this.setState({yob: Number(this.yearsOfBirth[buttonIndex])})
-            });
-    }
-
-    render() {
-        return (
-            <View style={baseStyles.container}>
-                <Text style={baseStyles.welcomeMsg}>Make an account</Text>
-                <View style={baseStyles.textInputContainer}>
-                    <View style={baseStyles.textInputs}>
-                        <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='User Email' onChangeText={(email) => this.setState({email})}/>
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Password' secureTextEntry={true} onChangeText={(password) => this.setState({password})}/>
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            {Platform.select({
-                                ios:
-                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickGender.bind(this)}>
-                                        <Text style={baseStyles.touchBtnText}>
-                                            {this.state.gender === '' ? "Gender" : this.state.gender}
-                                        </Text>
-                                    </TouchableOpacity>,
-                                android:
-                                    <Picker
-                                        style={baseStyles.pickerInput}
-                                        itemStyle={baseStyles.pickerLabel}
-                                        prompt='Gender'
-                                        mode='dropdown'
-                                        selectedValue={this.state.gender}
-                                        onValueChange={(itemValue, itemIndex) => this.setState({gender: itemValue})}>
-                                        <Picker.Item label='Gender' value='' />
-                                        <Picker.Item label='Male' value='Male' />
-                                        <Picker.Item label='Female' value='Female' />
-                                    </Picker>
-                            })}
-                        </View>
-                        <View style={baseStyles.textInputView}>
-                            {Platform.select({
-                                ios:
-                                    <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickYearOfBirth.bind(this)}>
-                                        <Text style={baseStyles.touchBtnText}>
-                                            {this.state.yob === '' ? "Year of Birth" : "Born in " + this.state.yob}
-                                        </Text>
-                                    </TouchableOpacity>,
-                                android:
-                                    <Picker
-                                        prompt='Year of Birth'
-                                        mode='dropdown'
-                                        selectedValue={this.state.yob}
-                                        onValueChange={(itemValue, itemIndex) => this.setState({yob: itemValue})}>
-                                        <Picker.Item label='Year of Birth' value='' />
-                                        {this.yearsOfBirthPicks}
-                                    </Picker>
-                            })}
-                        </View>
-                    </View>
-                </View>
-                <View style={baseStyles.buttonsView}>
-                    <Button containerViewStyle={{width: 'auto', marginLeft: 0}} title='Register' onPress={this.createUserInFirebase.bind(this)}/>
-                </View>
-                <Text style={baseStyles.centeredText}> {this.state.error} </Text>
-                {this.state.loading &&
-                <View style={baseStyles.loading}>
-                    <ActivityIndicator size='large' />
-                </View>
+        <View styles={styles.signupButton}>
+        <Button style={styles.signupButtonText}
+            title="Sign up"
+            onPress={() => {
+                const value = this.refs.form.getValue();
+                // Form has been validated
+                if (value) {
+                    this.setState({
+                        email: value.Email,
+                        password: value.Password,
+                        year: value.Year,
+                        gender: value.Gender
+                    })
+                   this.createUserInFirebase();
                 }
-            </View>
-        );
-    }
+            }}
+        />
+        <Text style={styles.errorText}> {this.state.error}</Text>
+        </View>
+
+      </ScrollView>
+      </View>
+    );
+  }
+
 }
+
+const styles = StyleSheet.create({
+
+container: {
+    justifyContent: 'center',
+    marginTop: 50,
+    padding: 20,
+    backgroundColor: '#ffffff',
+  },
+  signupButton: {
+    marginBottom: 15,
+    backgroundColor: '#bbb',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: 250,
+  },
+  signupButtonText: {
+    fontSize: 15,
+    color: '#fff',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 18,
+    marginBottom: 7,
+    fontWeight: '600'
+  }
+});
+
