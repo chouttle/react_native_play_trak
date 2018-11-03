@@ -89,11 +89,11 @@ export default class LoginPage extends React.Component {
                     <View style={baseStyles.buttonsView}>
                         <Button title="Login" containerViewStyle={{width: "auto"}} onPress={this._signInAsync.bind(this)}/>
                     </View>
-                    <Text style={baseStyles.centeredText}>{this.state.error}</Text>
                     <Text style={baseStyles.noAccountText}>You don't have an account? Create one!</Text>
                     <View style={baseStyles.buttonsView}>
                         <Button title="Register" containerViewStyle={{width: "auto", marginLeft: 0}} onPress={() => {this.props.navigation.navigate('Register');}}/>
                     </View>
+                    <Text style={baseStyles.centeredText}>{this.state.error}</Text>
                 </ScrollView>
                 {this.state.loading &&
                 <View style={baseStyles.loading}>

@@ -14,6 +14,7 @@ import About from "./components/About";
 import {Icon} from "react-native-elements";
 import Graphs from "./components/Graphs";
 import CalendarStats from "./components/CalendarStats";
+
 const baseStyles = require("./styles/baseStyles");
 
 export class DrawerComponent extends React.Component {

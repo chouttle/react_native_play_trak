@@ -2,16 +2,16 @@ import firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 import React from 'react';
 import {
-  StyleSheet,
-  Alert,
-  View,
-  Text,
-  Image,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  Button
+    StyleSheet,
+    Alert,
+    View,
+    Text,
+    Image,
+    TextInput,
+    ScrollView,
+    TouchableOpacity,
+    Linking,
+    Button, KeyboardAvoidingView
 } from 'react-native';
 
 import FormValidation from 'tcomb-form-native'
@@ -19,104 +19,108 @@ import FormValidation from 'tcomb-form-native'
 const Form = FormValidation.form.Form;
 
 const formStyles = {
-  ...Form.stylesheet,
-  formGroup: {
-    normal: {
-      marginBottom: 10
+    ...Form.stylesheet,
+    formGroup: {
+        normal: {
+            marginBottom: 10
+        },
     },
-  },
-  controlLabel: {
-    normal: {
-      color: "#4267b2",
-      fontSize: 18,
-      marginBottom: 7,
-      fontWeight: '600'
-    },
-    // Style applied when a validation error occours
-    error: {
-      color: 'red',
-      fontSize: 18,
-      marginBottom: 7,
-      fontWeight: '600'
+    controlLabel: {
+        normal: {
+            color: "black",
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600'
+        },
+        // Style applied when a validation error occours
+        error: {
+            color: 'red',
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600'
+        }
     }
-  }
-}
+};
 
 export default class Registration extends React.Component {
 
-  constructor(props) {
-    super(props);
-
-    // Email Validation
-    let valid_email = FormValidation.refinement(
-      FormValidation.String, function (email) {
-        var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
-        return re.test(email);
-      }
-    );
-
-    // Password Validation - Min of 6 chars
-    let valid_password = FormValidation.refinement(
-      FormValidation.String, function (password) {
-        return password.length >= 6;
-      }
-    );
-
-    // Year Validation
-    let valid_year_of_birth = FormValidation.refinement(
-        FormValidation.String, function (str ) {
-            let num = Number(str)
-            // Needs to be an integer, no floating point edge case
-            if (!Number.isInteger(num)) {
-                return false;
+    constructor(props) {
+        super(props);
+        formStyles.textbox.normal.backgroundColor = 'white';
+        formStyles.textbox.error.backgroundColor = 'white';
+        formStyles.select.normal.backgroundColor = 'white';
+        formStyles.pickerContainer.normal.backgroundColor = 'white';
+        formStyles.select.error.backgroundColor = 'white';
+        // Email Validation
+        let valid_email = FormValidation.refinement(
+            FormValidation.String, function (email) {
+                var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+                return re.test(email);
             }
-            return 1900 <= num && num <= 2018;
+        );
+
+        // Password Validation - Min of 6 chars
+        let valid_password = FormValidation.refinement(
+            FormValidation.String, function (password) {
+                return password.length >= 6;
+            }
+        );
+
+        // Year Validation
+        let valid_year_of_birth = FormValidation.refinement(
+            FormValidation.String, function (str ) {
+                let num = Number(str);
+                // Needs to be an integer, no floating point edge case
+                if (!Number.isInteger(num)) {
+                    return false;
+                }
+                return 1900 <= num && num <= 2018;
+            }
+        );
+        // Enums implemented as a picker
+        let valid_gender = FormValidation.enums({
+            M: "Male",
+            F: "Female"
+        });
+
+        let form_fields = FormValidation.struct({
+            Email: valid_email,
+            Password: valid_password,
+            YearOfBirth: valid_year_of_birth,
+            Gender: valid_gender
+        });
+
+        // Initial state
+        this.state = {
+            loading: false,
+            error: '',
+            email: '',
+            password: '',
+            gender: '',
+            year_of_birth: '',
+            form_fields: form_fields,
+            form_values: {},
+            form_options: this.getFormOptions()
         }
-    );
-    // Enums implemented as a picker
-    let valid_gender = FormValidation.enums({
-        M: "Male",
-        F: "Female"
-    });
-
-    let form_fields = FormValidation.struct({
-        Email: valid_email,
-        Password: valid_password,
-        Year: valid_year_of_birth,
-        Gender: valid_gender
-      })
-
-    // Initial state
-    this.state = {
-      loading: false,
-      error: '',
-      email: '',
-      password: '',
-      gender: '',
-      year: '',
-      form_fields: form_fields,
-      form_values: {},
-      form_options: this.getFormOptions()
     }
-  }
 
-  getFormOptions () {
-      let form_options =  {
-        fields: {
-          Email: { error: 'Please enter a valid email' },
-          Year: { error: 'Please enter a valid year' },
-          Password: {
-            error: 'Your password must be at least 6 characters',
-            secureTextEntry: true,
-          },
-          Gender: {
-              error: "Please select your gender"
-          }
-        },
-        stylesheet: formStyles
-      };
-      return form_options;
-  }
+    getFormOptions () {
+        let form_options =  {
+            fields: {
+                Email: { error: 'Please enter a valid email' },
+                YearOfBirth: { error: 'Please enter a valid year of birth' },
+                Password: {
+                    error: 'Your password must be at least 6 characters',
+                    secureTextEntry: true,
+                },
+                Gender: {
+                    error: "Please select your gender"
+                }
+            },
+            stylesheet: formStyles
+        };
+        return form_options;
+    }
 
     createUserInFirebase(){
         this.setState({
@@ -144,7 +148,7 @@ export default class Registration extends React.Component {
         });
         const userPath = `/users/${uid}`;
         const userSettings = {
-            yob: this.state.year,
+            yob: this.state.year_of_birth,
             sex: this.state.gender
         };
 
@@ -170,69 +174,39 @@ export default class Registration extends React.Component {
         });
     }
 
-  render() {
-    return (
-      <View style={styles.container}>
-      <ScrollView>
-      <Form
-          ref="form"
-          type={this.state.form_fields}
-          value={this.state.form_values}
-          options={this.state.form_options} />
+    render() {
+        return (
+            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
+                <ScrollView style={baseStyles.scrollViewContainer}>
+                    <Form
+                        ref="form"
+                        type={this.state.form_fields}
+                        value={this.state.form_values}
+                        options={this.state.form_options}
+                        onChange={(form_values) => this.setState({form_values})}/>
 
-        <View styles={styles.signupButton}>
-        <Button style={styles.signupButtonText}
-            title="Sign up"
-            onPress={() => {
-                const value = this.refs.form.getValue();
-                // Form has been validated
-                if (value) {
-                    this.setState({
-                        email: value.Email,
-                        password: value.Password,
-                        year: value.Year,
-                        gender: value.Gender
-                    })
-                   this.createUserInFirebase();
-                }
-            }}
-        />
-        <Text style={styles.errorText}> {this.state.error}</Text>
-        </View>
-
-      </ScrollView>
-      </View>
-    );
-  }
-
+                    <View style={baseStyles.signupButton}>
+                        <Button style={baseStyles.signupButtonText}
+                                title="Sign up"
+                                onPress={() => {
+                                    const value = this.refs.form.getValue();
+                                    // Form has been validated
+                                    if (value) {
+                                        this.setState({
+                                            email: value.Email,
+                                            password: value.Password,
+                                            year_of_birth: value.YearOfBirth,
+                                            gender: value.Gender
+                                        });
+                                        this.createUserInFirebase();
+                                    }
+                                }}
+                        />
+                        <Text style={baseStyles.errorText}> {this.state.error}</Text>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        );
+    }
 }
-
-const styles = StyleSheet.create({
-
-container: {
-    justifyContent: 'center',
-    marginTop: 50,
-    padding: 20,
-    backgroundColor: '#ffffff',
-  },
-  signupButton: {
-    marginBottom: 15,
-    backgroundColor: '#bbb',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: 250,
-  },
-  signupButtonText: {
-    fontSize: 15,
-    color: '#fff',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 18,
-    marginBottom: 7,
-    fontWeight: '600'
-  }
-});
 

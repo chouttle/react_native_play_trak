@@ -4,11 +4,6 @@ const React = require('react-native');
 const {StyleSheet} = React;
 
 
-const placeholderTextColor = Platform.select({
-    ios: '',
-    android: 'white'
-});
-module.exports = placeholderTextColor;
 module.exports = StyleSheet.create({
     container: {
         flex: 1,
@@ -19,7 +14,8 @@ module.exports = StyleSheet.create({
     scrollViewContainer: {
         flex: 1,
         // backgroundColor: '#fff'
-        backgroundColor: '#0bc5c5'
+        backgroundColor: '#0bc5c5',
+        padding: 20
     },
     scrollViewHorizontal: {
         backgroundColor: '#fff',
@@ -106,7 +102,7 @@ module.exports = StyleSheet.create({
         marginHorizontal: '20%'
     },
     noAccountText: {
-        marginTop: 30,
+        marginTop: 10,
         marginBottom: 10,
         lineHeight: 20,
         textAlign: 'center',
@@ -161,5 +157,24 @@ module.exports = StyleSheet.create({
     },
     whiteText: {
         color: 'white'
+    },
+    signupButton: {
+        // marginBottom: 15,
+        // backgroundColor: '#bbb',
+        // paddingVertical: 15,
+        // paddingHorizontal: 30,
+        // borderRadius: 5,
+        // alignItems: 'center',
+        // width: 250,
+    },
+    signupButtonText: {
+        fontSize: 15,
+        color: '#fff',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 18,
+        marginBottom: 7,
+        fontWeight: '600'
     }
 });
