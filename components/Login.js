@@ -1,5 +1,5 @@
 import React from 'react';
-import firebase from 'firebase';
+import * as firebase from 'firebase';
 import '../assets/dices.png';
 import {
     AsyncStorage,
@@ -13,6 +13,59 @@ import {
     KeyboardAvoidingView, Image
 } from 'react-native';
 const baseStyles = require("../styles/baseStyles");
+
+
+import FormValidation from 'tcomb-form-native'
+
+const Form = FormValidation.form.Form;
+
+const formStyles = {
+    ...Form.stylesheet,
+    formGroup: {
+        normal: {
+            marginBottom: 10,
+        },
+    },
+    controlLabel: {
+        normal: {
+            color: "black",
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+        },
+        // Style applied when a validation error occours
+        error: {
+            color: 'red',
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+        }
+    },
+    // textbox: {
+    //     normal: {
+    //         backgroundColor: 'white'
+    //     },
+    //     error: {
+    //         backgroundColor: 'white'
+    //     }
+    // },
+    // select: {
+    //     normal: {
+    //         backgroundColor: 'white'
+    //     },
+    //     error: {
+    //         backgroundColor: 'white'
+    //     }
+    // },
+    // pickerContainer: {
+    //     normal: {
+    //         backgroundColor: 'white'
+    //     },
+    //     error: {
+    //         backgroundColor: 'white'
+    //     }
+    // }
+};
 
 export default class LoginPage extends React.Component {
 
@@ -33,13 +86,60 @@ export default class LoginPage extends React.Component {
             firebase.initializeApp(config);
         }
 
+        // Email Validation
+        let valid_email = FormValidation.refinement(
+            FormValidation.String, function (email) {
+                var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+                return re.test(email);
+            }
+        );
+
+        // Password Validation - Min of 6 chars
+        let valid_password = FormValidation.refinement(
+            FormValidation.String, function (password) {
+                return password.length >= 6;
+            }
+        );
+
+        let form_fields = FormValidation.struct({
+            Email: valid_email,
+            Password: valid_password,
+        });
+
+        // Initial state
         this.state = {
-            textEmail: '',
-            textPwd: '',
-            userId: '',
+            loading: false,
             error: '',
-            loading: false
+            email: '',
+            password: '',
+            userId: '',
+            form_fields: form_fields,
+            form_values: {},
+            form_options: this.getFormOptions()
+        }
+
+        // this.state = {
+        //     textEmail: '',
+        //     textPwd: '',
+        //     userId: '',
+        //     error: '',
+        //     loading: false
+        // };
+    }
+
+    
+    getFormOptions () {
+        let form_options =  {
+            fields: {
+                Email: { error: 'Please enter a valid email' },
+                Password: {
+                    error: 'Your password must be at least 6 characters',
+                    secureTextEntry: true,
+                }
+            },
+            stylesheet: formStyles
         };
+        return form_options;
     }
 
     _signInAsync(){
@@ -47,7 +147,7 @@ export default class LoginPage extends React.Component {
             error: '',
             loading: true
         });
-        firebase.auth().signInWithEmailAndPassword(this.state.textEmail, this.state.textPwd).then(async () => {
+        firebase.auth().signInWithEmailAndPassword(this.state.email, this.state.passowrd).then(async () => {
             await AsyncStorage.setItem('userToken', firebase.auth().currentUser.uid);
             this.setState({
                 error: 'Successful',
@@ -66,9 +166,7 @@ export default class LoginPage extends React.Component {
         return (
             <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
                 <ScrollView style={baseStyles.scrollViewContainer}>
-                    {/*<Text style={baseStyles.welcomeMsg}>Welcome to */}
-                    <Text style={baseStyles.titleMsg}>Play & Trak
-                        {/*<Text style={baseStyles.pAndT}>Play&Trak</Text>*/}
+                <Text style={baseStyles.titleMsg}>Play & Trak
                     </Text>
                     <View style={{ justifyContent: 'center', alignItems: 'center'}}>
                         <Image style={{ flexShrink: 1}}
@@ -76,32 +174,38 @@ export default class LoginPage extends React.Component {
                                source={require('../assets/dices.png')}
                         />
                     </View>
-                    <View style={baseStyles.textInputContainer}>
-                        <View style={baseStyles.textInputs}>
-                            <View style={baseStyles.textInputView}>
-                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="User Email" onChangeText={(textEmail) => this.setState({textEmail})}/>
-                            </View>
-                            <View style={baseStyles.textInputView}>
-                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Password" secureTextEntry={true} onChangeText={(textPwd) => this.setState({textPwd})}/>
-                            </View>
-                        </View>
-                    </View>
-                    <View style={baseStyles.buttonsView}>
-                        <Button title="Login" containerViewStyle={{width: "auto"}} onPress={this._signInAsync.bind(this)}/>
-                    </View>
-                    <Text style={baseStyles.noAccountText}>You don't have an account? Create one!</Text>
-                    <View style={baseStyles.buttonsView}>
-                        <Button title="Register" containerViewStyle={{width: "auto", marginLeft: 0}} onPress={() => {this.props.navigation.navigate('Register');}}/>
-                    </View>
-                    <Text style={baseStyles.centeredText}>{this.state.error}</Text>
-                </ScrollView>
-                {this.state.loading &&
-                <View style={baseStyles.loading}>
-                    <ActivityIndicator size='large' />
-                </View>
-                }
-            </KeyboardAvoidingView>
+                    <Form
+                        ref="form"
+                        type={this.state.form_fields}
+                        value={this.state.form_values}
+                        options={this.state.form_options}
+                        onChange={(form_values) => this.setState({form_values})}/>
 
+                    <View style={baseStyles.signupButton}>
+                        <Button style={baseStyles.signupButtonText}
+                                title="Log in"
+                                onPress={() => {
+                                    const value = this.refs.form.getValue();
+                                    // Form has been validated
+                                    if (value) {
+                                        this.setState({
+                                            email: value.Email,
+                                            password: value.Password,
+                                        });
+                                        this._signInAsync();
+                                    }
+                                }}
+                        />
+                        <Text style={baseStyles.noAccountText}>You don't have an account? Create one!</Text>
+                        <Button style={baseStyles.signupButtonText}
+                                title="Register"
+                                onPress={() => {this.props.navigation.navigate('Register');}}
+                        />
+                        
+                        <Text style={baseStyles.errorText}> {this.state.error}</Text>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         );
     }
 }

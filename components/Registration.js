@@ -1,4 +1,4 @@
-import firebase from 'firebase';
+import * as firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 import React from 'react';
 import {
@@ -46,11 +46,11 @@ export default class Registration extends React.Component {
 
     constructor(props) {
         super(props);
-        formStyles.textbox.normal.backgroundColor = 'white';
-        formStyles.textbox.error.backgroundColor = 'white';
-        formStyles.select.normal.backgroundColor = 'white';
-        formStyles.pickerContainer.normal.backgroundColor = 'white';
-        formStyles.select.error.backgroundColor = 'white';
+        // formStyles.textbox.normal.backgroundColor = 'white';
+        // formStyles.textbox.error.backgroundColor = 'white';
+        // formStyles.select.normal.backgroundColor = 'white';
+        // formStyles.pickerContainer.normal.backgroundColor = 'white';
+        // formStyles.select.error.backgroundColor = 'white';
         // Email Validation
         let valid_email = FormValidation.refinement(
             FormValidation.String, function (email) {
@@ -183,7 +183,7 @@ export default class Registration extends React.Component {
                         type={this.state.form_fields}
                         value={this.state.form_values}
                         options={this.state.form_options}
-                        onChange={(form_values) => this.setState({form_values})}/>
+                        onChange={(form_values) => {this.setState({ form_values })}/>
 
                     <View style={baseStyles.signupButton}>
                         <Button style={baseStyles.signupButtonText}
