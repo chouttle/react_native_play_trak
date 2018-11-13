@@ -162,3 +162,5 @@ export default class UserSettings extends React.Component {
         );
     }
 }
+
+// note that since this.state.yob is initialized to null, on iOS the buttons are "Gender" and then "Born in null"
