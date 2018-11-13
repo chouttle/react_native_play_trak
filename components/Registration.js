@@ -10,6 +10,7 @@ import {
     TextInput,
     ScrollView,
     TouchableOpacity,
+    TouchableHighlight,
     Linking,
     Button, KeyboardAvoidingView
 } from 'react-native';
@@ -173,20 +174,52 @@ export default class Registration extends React.Component {
             });
         });
     }
-
     render() {
         return (
-            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
-                <ScrollView style={baseStyles.scrollViewContainer}>
+          <View style={styles.container}>
+             <Form
+                        ref="form"
+                        type={this.state.form_fields}
+                        value={this.state.form_values}
+                        options={this.state.form_options}
+                        onChange={(form_values) => {
+                            this.setState({ form_values})
+                        }}
+                        />
+
+            <TouchableHighlight style={styles.button} onPress={() => {
+                                    const value = this.refs.form.getValue();
+                                    // Form has been validated
+                                    if (value) {
+                                        this.setState({
+                                            email: value.Email,
+                                            password: value.Password,
+                                            year_of_birth: value.YearOfBirth,
+                                            gender: value.Gender
+                                        });
+                                        this.createUserInFirebase();
+                                    }
+                                }} underlayColor='#99d9f4'>
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableHighlight>
+          </View>
+        );
+      }
+      // delete after
+    renderTwo() {
+        return (
+                <ScrollView>
                     <Form
                         ref="form"
                         type={this.state.form_fields}
                         value={this.state.form_values}
                         options={this.state.form_options}
-                        onChange={(form_values) => {this.setState({ form_values })}/>
+                        onChange={(form_values) => {
+                            this.setState({ form_values})
+                        }}
+                        />
 
-                    <View style={baseStyles.signupButton}>
-                        <Button style={baseStyles.signupButtonText}
+                        <Button 
                                 title="Sign up"
                                 onPress={() => {
                                     const value = this.refs.form.getValue();
@@ -202,11 +235,32 @@ export default class Registration extends React.Component {
                                     }
                                 }}
                         />
-                        <Text style={baseStyles.errorText}> {this.state.error}</Text>
-                    </View>
+                       
                 </ScrollView>
-            </KeyboardAvoidingView>
         );
     }
 }
 
+var styles = StyleSheet.create({
+    container: {
+      justifyContent: 'center',
+      marginTop: 50,
+      padding: 20,
+      backgroundColor: '#ffffff',
+    },
+    buttonText: {
+      fontSize: 18,
+      color: 'white',
+      alignSelf: 'center'
+    },
+    button: {
+      height: 36,
+      backgroundColor: '#48BBEC',
+      borderColor: '#48BBEC',
+      borderWidth: 1,
+      borderRadius: 8,
+      marginBottom: 10,
+      alignSelf: 'stretch',
+      justifyContent: 'center'
+    }
+  });

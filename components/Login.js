@@ -179,7 +179,11 @@ export default class LoginPage extends React.Component {
                         type={this.state.form_fields}
                         value={this.state.form_values}
                         options={this.state.form_options}
-                        onChange={(form_values) => this.setState({form_values})}/>
+                        onChange={(form_values) => {
+                            this.setState({ form_values})
+                        }}
+                        />
+
 
                     <View style={baseStyles.signupButton}>
                         <Button style={baseStyles.signupButtonText}
@@ -187,7 +191,7 @@ export default class LoginPage extends React.Component {
                                 onPress={() => {
                                     const value = this.refs.form.getValue();
                                     // Form has been validated
-                                    if (value) {
+                                    if (value.Email && value.Password) {
                                         this.setState({
                                             email: value.Email,
                                             password: value.Password,
