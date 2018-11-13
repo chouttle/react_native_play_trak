@@ -46,11 +46,11 @@ export default class Registration extends React.Component {
 
     constructor(props) {
         super(props);
-        // formStyles.textbox.normal.backgroundColor = 'white';
-        // formStyles.textbox.error.backgroundColor = 'white';
-        // formStyles.select.normal.backgroundColor = 'white';
-        // formStyles.pickerContainer.normal.backgroundColor = 'white';
-        // formStyles.select.error.backgroundColor = 'white';
+        formStyles.textbox.normal.backgroundColor = 'white';
+        formStyles.textbox.error.backgroundColor = 'white';
+        formStyles.select.normal.backgroundColor = 'white';
+        formStyles.pickerContainer.normal.backgroundColor = 'white';
+        formStyles.select.error.backgroundColor = 'white';
         // Email Validation
         let valid_email = FormValidation.refinement(
             FormValidation.String, function (email) {
@@ -127,7 +127,7 @@ export default class Registration extends React.Component {
             error: '',
             loading: true
         });
-        firebase.auth().createUserWithEmailAndPassword(this.state.email, this.state.password).then((authData) => {
+        firebase.auth().createUserWithEmailAndPassword(this.state.email.trim(), this.state.password).then((authData) => {
             this.setState({
                 error: 'Successful!',
                 loading: false
@@ -135,7 +135,7 @@ export default class Registration extends React.Component {
             this.writeUserData(authData.uid);
         }).catch((error) => {
             this.setState({
-                error: error,
+                error: 'error is: ' + error,
                 loading: false
             });
         });
@@ -183,23 +183,26 @@ export default class Registration extends React.Component {
                         type={this.state.form_fields}
                         value={this.state.form_values}
                         options={this.state.form_options}
-                        onChange={(form_values) => {this.setState({ form_values })}/>
+                        onChange={(form_values) => {this.setState({ form_values })}}/>
 
                     <View style={baseStyles.signupButton}>
                         <Button style={baseStyles.signupButtonText}
                                 title="Sign up"
                                 onPress={() => {
+                                    this.refs.form.validate();
                                     const value = this.refs.form.getValue();
                                     // Form has been validated
                                     if (value) {
                                         this.setState({
-                                            email: value.Email,
+                                            email: value.Email.trim(),
                                             password: value.Password,
                                             year_of_birth: value.YearOfBirth,
                                             gender: value.Gender
                                         });
-                                        this.createUserInFirebase();
                                     }
+                                    setTimeout(() => {
+                                        this.createUserInFirebase();
+                                    }, 0);
                                 }}
                         />
                         <Text style={baseStyles.errorText}> {this.state.error}</Text>

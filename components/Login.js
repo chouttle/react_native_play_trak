@@ -32,6 +32,7 @@ const formStyles = {
             fontSize: 18,
             marginBottom: 7,
             fontWeight: '600',
+            borderBottomColor: 'white'
         },
         // Style applied when a validation error occours
         error: {
@@ -71,6 +72,11 @@ export default class LoginPage extends React.Component {
 
     constructor(props) {
         super(props);
+        formStyles.textbox.normal.backgroundColor = 'white';
+        formStyles.textbox.error.backgroundColor = 'white';
+        formStyles.select.normal.backgroundColor = 'white';
+        formStyles.pickerContainer.normal.backgroundColor = 'white';
+        formStyles.select.error.backgroundColor = 'white';
         // Initialize Firebase
         const config = {
             apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
@@ -147,7 +153,7 @@ export default class LoginPage extends React.Component {
             error: '',
             loading: true
         });
-        firebase.auth().signInWithEmailAndPassword(this.state.email, this.state.passowrd).then(async () => {
+        firebase.auth().signInWithEmailAndPassword(this.state.email, this.state.password).then(async () => {
             await AsyncStorage.setItem('userToken', firebase.auth().currentUser.uid);
             this.setState({
                 error: 'Successful',
@@ -192,7 +198,9 @@ export default class LoginPage extends React.Component {
                                             email: value.Email,
                                             password: value.Password,
                                         });
-                                        this._signInAsync();
+                                        setTimeout(() => {
+                                            this._signInAsync();
+                                        }, 0);
                                     }
                                 }}
                         />
