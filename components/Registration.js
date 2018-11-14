@@ -46,11 +46,11 @@ export default class Registration extends React.Component {
 
     constructor(props) {
         super(props);
-        formStyles.textbox.normal.backgroundColor = 'white';
-        formStyles.textbox.error.backgroundColor = 'white';
-        formStyles.select.normal.backgroundColor = 'white';
-        formStyles.pickerContainer.normal.backgroundColor = 'white';
-        formStyles.select.error.backgroundColor = 'white';
+        // formStyles.textbox.normal.backgroundColor = 'white';
+        // formStyles.textbox.error.backgroundColor = 'white';
+        // formStyles.select.normal.backgroundColor = 'white';
+        // formStyles.pickerContainer.normal.backgroundColor = 'white';
+        // formStyles.select.error.backgroundColor = 'white';
         // Email Validation
         let valid_email = FormValidation.refinement(
             FormValidation.String, function (email) {
@@ -79,8 +79,8 @@ export default class Registration extends React.Component {
         );
         // Enums implemented as a picker
         let valid_gender = FormValidation.enums({
-            M: "Male",
-            F: "Female"
+            Male: "Male",
+            Female: "Female"
         });
 
         let form_fields = FormValidation.struct({
@@ -123,6 +123,7 @@ export default class Registration extends React.Component {
     }
 
     createUserInFirebase(){
+        console.log('STARTING CREATING USER');
         this.setState({
             error: '',
             loading: true
@@ -132,7 +133,11 @@ export default class Registration extends React.Component {
                 error: 'Successful!',
                 loading: false
             });
-            this.writeUserData(authData.uid);
+            console.log('authData');
+            console.log(authData);
+            console.log('USER CREATED with user.uid: ' + authData.user.uid);
+            console.log('CALLING USERDATA FUNCTION');
+            this.writeUserData(authData.user.uid);
         }).catch((error) => {
             this.setState({
                 error: 'error is: ' + error,
@@ -142,6 +147,8 @@ export default class Registration extends React.Component {
     }
 
     writeUserData(uid){
+        console.log('USER DATA FUNCTION');
+        console.log(this.state.gender);
         this.setState({
             error: '',
             loading: true
@@ -151,8 +158,11 @@ export default class Registration extends React.Component {
             yob: this.state.year_of_birth,
             sex: this.state.gender
         };
-
+        console.log('userSettings');
+        console.log(userSettings);
+        console.log('pushing data to firebase');
         firebase.database().ref(userPath).set(userSettings).then(async () => {
+            console.log('data supposedly pushed to firebase.');
             try{
                 await AsyncStorage.setItem('userToken', uid);
             } catch(error){
@@ -165,8 +175,10 @@ export default class Registration extends React.Component {
                 error: 'Successful!',
                 loading: false
             });
+            console.log('navigating to app');
             this.props.navigation.navigate('App');
         }).catch((error) => {
+            console.log('caught an error');
             this.setState({
                 error: 'Could not save user data: ' + error,
                 loading: false
@@ -189,7 +201,6 @@ export default class Registration extends React.Component {
                         <Button style={baseStyles.signupButtonText}
                                 title="Sign up"
                                 onPress={() => {
-                                    this.refs.form.validate();
                                     const value = this.refs.form.getValue();
                                     // Form has been validated
                                     if (value) {
@@ -199,10 +210,10 @@ export default class Registration extends React.Component {
                                             year_of_birth: value.YearOfBirth,
                                             gender: value.Gender
                                         });
+                                        setTimeout(() => {
+                                            this.createUserInFirebase();
+                                        }, 0);
                                     }
-                                    setTimeout(() => {
-                                        this.createUserInFirebase();
-                                    }, 0);
                                 }}
                         />
                         <Text style={baseStyles.errorText}> {this.state.error}</Text>
@@ -212,4 +223,3 @@ export default class Registration extends React.Component {
         );
     }
 }
-

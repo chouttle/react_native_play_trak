@@ -13,26 +13,33 @@ export default class UserSettings extends React.Component {
             this.yearsOfBirth.push(i + '');
             this.yearsOfBirthPicks.push(<Picker.Item value={i} label={i + ''} />);
         }
-        const user = firebase.auth().currentUser;
-        let userSettings = {};
-        const userPath = `/users/${user.uid}`;
         this.state = {
             error: '',
             loading: true,
             yob: null
         };
+    }
+
+    componentDidMount() {
+        const user = firebase.auth().currentUser;
+        let userSettings = {};
+        const userPath = `/users/${user.uid}`;
         firebase.database().ref(userPath).once('value').then((snapshot) => {
             userSettings = snapshot.val();
+            console.log('userSettings');
+            console.log(userSettings);
             this.setState({
                 user: user,
                 userSettings: userSettings,
                 textEmail: '',
-                yob: userSettings ? userSettings.yob : null,
+                yob: userSettings ? Number(userSettings.yob) : null,
                 userId: '',
                 error: '',
                 gender: userSettings ? userSettings.sex : '',
                 loading: false
             });
+            console.log('this.state.yob');
+            console.log(this.state.yob);
         }).catch((error) => {
             this.setState({
                 error: 'Could not load the user settings: ' + error,

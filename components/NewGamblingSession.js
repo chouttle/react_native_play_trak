@@ -25,6 +25,8 @@ export default class NewGamblingSession extends React.Component {
 
         this.state = {
             user: user,
+            alertDailyLimit: {},
+            alertNormativeFeedback: {},
             budgetLimit: '',
             timeLimit: '',
             previousSessions: [],
@@ -120,6 +122,34 @@ export default class NewGamblingSession extends React.Component {
             this.loadDataForAlert().then(() => {
                 this.alertDailyLimits();
                 this.alertNormativeFeedback();
+                setTimeout(() => {
+                    if(Platform.OS === 'ios'){
+                        if(this.state.alertDailyLimit.title){
+                            Alert.alert(this.state.alertDailyLimit.title,
+                                this.state.alertDailyLimit.message,
+                                this.state.alertDailyLimit.buttons);
+                        }
+                        if(this.state.alertNormativeFeedback.title) {
+                            Alert.alert(this.state.alertNormativeFeedback.title,
+                                this.state.alertNormativeFeedback.message,
+                                this.state.alertNormativeFeedback.buttons);
+                        }
+                    } else {
+                        if(this.state.alertDailyLimit.title && this.state.alertNormativeFeedback.title) {
+                            Alert.alert(this.state.alertDailyLimit.title + ' && ' + this.state.alertNormativeFeedback.title,
+                                this.state.alertDailyLimit.message + '\n\n' + this.state.alertNormativeFeedback.message,
+                                this.state.alertDailyLimit.buttons);
+                        } else if(this.state.alertDailyLimit.title) {
+                            Alert.alert(this.state.alertDailyLimit.title,
+                                this.state.alertDailyLimit.message,
+                                this.state.alertDailyLimit.buttons);
+                        } else if(this.state.alertNormativeFeedback.title) {
+                            Alert.alert(this.state.alertNormativeFeedback.title,
+                                this.state.alertNormativeFeedback.message,
+                                this.state.alertNormativeFeedback.buttons);
+                        }
+                    }
+                }, 0);
             });
             setTimeout(() => {
                 this.setState({
@@ -198,21 +228,23 @@ export default class NewGamblingSession extends React.Component {
             const overTime = this.state.timeLimit < this.state.todayTotalDuration;
             console.log("overBudget: " + overBudget + " and overTime: " + overTime);
             if(overBudget && overTime) {
-                Alert.alert("Daily limits exceeded",
-                    "WARNING: You have exceeded your daily budget and time limit:\n" +
-                    "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.\n" +
-                    "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
-                    [{text: "OK"}])
+                this.setState({alertDailyLimit: {title: "Daily limits exceeded", message: "WARNING: You have exceeded your daily budget and time limit:\n" +
+                            "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.\n" +
+                            "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
+                        buttons: [{text: "OK"}]}});
             } else if(overBudget) {
-                Alert.alert("Daily budget exceeded",
-                    "WARNING: You have exceeded your daily budget:\n" +
-                    "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.",
-                    [{text: "OK"}])
+                this.setState({alertDailyLimit: {
+                        title: "Daily budget exceeded",
+                        message: "WARNING: You have exceeded your daily budget:\n" +
+                            "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.",
+                        buttons: [{text: "OK"}]}});
             } else if(overTime) {
-                Alert.alert("Daily time limit exceeded",
-                    "WARNING: You have exceeded your daily time limit:\n" +
-                    "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
-                    [{text: "OK"}])
+                this.setState({alertDailyLimit: {
+                        title: "Daily time limit exceeded",
+                        message: "WARNING: You have exceeded your daily time limit:\n" +
+                            "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
+                        buttons: [{text: "OK"}]
+                    }});
             }
         }).catch((error) => {
             this.setState({
@@ -235,12 +267,14 @@ export default class NewGamblingSession extends React.Component {
                 totalAmount += Number(this.state.previousSessions[i].startingAmount);
             }
             const averageAmount = totalAmount / freq;
-            if(averageAmount < -50) {
+            if(averageAmount >= 50) {
                 console.log("first Normativefeedback alert > 50");
-                Alert.alert("Information",
-                    "This is the second time you gamble. People your age and gender tend to gamble around $" + Math.floor(0.75 * averageAmount) +
-                    " per session while you have gambled on average $" + averageAmount + ".",
-                    [{text: "OK"}])
+                this.setState({alertNormativeFeedback: {
+                        title: "Information",
+                        message: "This is the second time you gamble. People your age and gender tend to gamble around $" + Math.floor(0.75 * averageAmount) +
+                            " per session while you have gambled on average $" + averageAmount + ".",
+                        buttons: [{text: "OK"}]
+                    }});
             }
         } else if(this.state.totalNumSessions > freq && this.state.totalNumSessions % freq === 0) {
             let totalMostRecent = 0;
@@ -253,16 +287,20 @@ export default class NewGamblingSession extends React.Component {
             }
             if(totalMostRecent > totalLeastRecent) {
                 console.log("gambling going up alert");
-                Alert.alert("Slow down!",
-                    "You have gambled more ($" + totalMostRecent + ") in the past " + freq + " sessions" +
-                    " than in the " + freq + " before that ($" + totalLeastRecent + ").",
-                    [{text: "OK"}])
+                this.setState({alertNormativeFeedback: {
+                        title: "Slow down!",
+                        message: "You have gambled more ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                            " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                        buttons: [{text: "OK"}]
+                    }});
             } else if(totalMostRecent < totalLeastRecent) {
                 console.log("gambling going down alert");
-                Alert.alert("Good job!",
-                    "You have gambled less ($" + totalMostRecent + ") in the past " + freq + " sessions" +
-                    " than in the " + freq + " before that ($" + totalLeastRecent + ").",
-                    [{text: "OK"}])
+                this.setState({alertNormativeFeedback: {
+                        title: "Good job!",
+                        message: "You have gambled less ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                            " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                        buttons: [{text: "OK"}]
+                    }});
             }
         }
     }

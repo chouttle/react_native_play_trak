@@ -17,6 +17,9 @@ class DailyStats extends React.Component {
             error: '',
             loading: false
         };
+    }
+
+    componentDidMount() {
         this.setState({
             error: '',
             loading: true
@@ -25,6 +28,8 @@ class DailyStats extends React.Component {
         const userPath = `/users/${user.uid}`;
         firebase.database().ref(userPath).once('value').then((snapshot) => {
             const userSettings = snapshot.val();
+            console.log('userSettings');
+            console.log(userSettings);
             this.setState({
                 userSettings: userSettings,
                 budgetLimit: userSettings.dailyLimit || '0',
@@ -121,6 +126,7 @@ class DailyStats extends React.Component {
             dailyLimit: this.state.budgetLimit,
             dailyTimeLimit: this.state.timeLimit
         }).then(() => {
+            console.log('daily limits were successfully set');
             this.setState({
                 error: 'Success!',
                 loading: false
@@ -132,6 +138,7 @@ class DailyStats extends React.Component {
                 });
             }, 5000)
         }).catch((error) => {
+            console.log('error happened while updating daily limits: ' + error);
             this.setState({
                 error: 'Could not save user data: ' + error,
                 loading: false
