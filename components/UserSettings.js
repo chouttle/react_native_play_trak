@@ -138,7 +138,7 @@ export default class UserSettings extends React.Component {
                                 ios:
                                     <TouchableOpacity style={baseStyles.touchBtn} onPress={this.iosPickYearOfBirth.bind(this)}>
                                         <Text style={baseStyles.touchBtnText}>
-                                            {this.state.yob === '' ? "Year of Birth" : "Born in " + this.state.yob}
+                                            {!this.state.yob ? "Year of Birth" : "Born in " + this.state.yob}
                                         </Text>
                                     </TouchableOpacity>,
                                 android:

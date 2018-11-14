@@ -41,31 +41,7 @@ const formStyles = {
             marginBottom: 7,
             fontWeight: '600',
         }
-    },
-    // textbox: {
-    //     normal: {
-    //         backgroundColor: 'white'
-    //     },
-    //     error: {
-    //         backgroundColor: 'white'
-    //     }
-    // },
-    // select: {
-    //     normal: {
-    //         backgroundColor: 'white'
-    //     },
-    //     error: {
-    //         backgroundColor: 'white'
-    //     }
-    // },
-    // pickerContainer: {
-    //     normal: {
-    //         backgroundColor: 'white'
-    //     },
-    //     error: {
-    //         backgroundColor: 'white'
-    //     }
-    // }
+    }
 };
 
 export default class LoginPage extends React.Component {

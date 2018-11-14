@@ -7,6 +7,39 @@ import {
 // import {Modal} from "expo";
 const baseStyles = require("../styles/baseStyles");
 
+
+import FormValidation from 'tcomb-form-native'
+
+const Form = FormValidation.form.Form;
+
+const formStyles = {
+    ...Form.stylesheet,
+    formGroup: {
+        normal: {
+            marginBottom: 10,
+        },
+    },
+    controlLabel: {
+        normal: {
+            color: "black",
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+            borderBottomColor: 'white'
+        },
+        // Style applied when a validation error occours
+        error: {
+            color: 'red',
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+        }
+    }
+};
+let gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
+'Lottery tickets/scratch cards', 'Other'];
+let gameModes = ['Online', 'Offline'];
+
 export default class NewGamblingSession extends React.Component {
 
     gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
@@ -15,6 +48,24 @@ export default class NewGamblingSession extends React.Component {
 
     constructor(props) {
         super(props);
+
+        let valid_positive_number = FormValidation.refinement(
+            FormValidation.String, function (str ) {
+                let num = Number(str);
+                // Needs to be an integer, no floating point edge case
+                if (!Number.isFinite(num)) {
+                    return false;
+                }
+                return num >= 0;
+            }
+        );
+
+        let form_fields = FormValidation.struct({
+            Duration: valid_positive_number,
+            StartAmount: valid_positive_number,
+            EndAmount: valid_positive_number,
+        });
+
         const { params } = this.props.navigation.state;
         const user = firebase.auth().currentUser;
 
@@ -47,8 +98,28 @@ export default class NewGamblingSession extends React.Component {
             endTimeHours: currentDateTime.getHours(),
             endTimeMinutes: currentDateTime.getMinutes(),
             startDateModalVisible: false,
-            loading: false
+            loading: false,
+            form_fields: form_fields,
+            form_values: {},
+            form_options: this.getFormOptions()
         };
+    }
+
+    
+    getFormOptions () {
+        let form_options =  {
+            fields: {
+                StartAmount: { error: 'Please enter a valid number' },
+                EndAmount: { error: 'Please enter a valid number' },
+                Duration: { error: 'Please enter a valid number' }
+            },
+            stylesheet: formStyles
+        };
+        return form_options;
+    }
+
+    clearForm() {
+        this.setState({ form_values: undefined})
     }
 
     saveNewGamblingSession(){
@@ -57,7 +128,7 @@ export default class NewGamblingSession extends React.Component {
             loading: true
         });
 
-        if(this.state.startAmount === '' || this.state.endAmount === '') {
+        if (this.state.startAmount === '' || this.state.endAmount === '') {
             this.setState({
                 error: "The start and end amount need to be set to a numeric value.",
                 loading: false
@@ -403,18 +474,6 @@ export default class NewGamblingSession extends React.Component {
         });
     }
 
-    _DurationComponent(){
-        // if(Platform.OS === 'ios'){
-        //     return;
-        // } else if(Platform.OS === 'android'){
-        return (
-            <View style={baseStyles.buttonsView}>
-                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Duration (minutes)" keyboardType="numeric" returnKeyType="done" onChangeText={(duration) => this.setState({duration})}/>
-            </View>
-        );
-        // }
-    }
-
     iosPickGameType() {
         ActionSheetIOS.showActionSheetWithOptions({
                 options: this.gameTypes
@@ -446,7 +505,12 @@ export default class NewGamblingSession extends React.Component {
                     {/*<View style={{marginVertical: 5}}/>*/}
                     {/*{this._EndDatePickerComponent()}*/}
                     <View style={{marginVertical: 5}}/>
-                    {this._DurationComponent()}
+                    <Form
+                        ref="form"
+                        type={this.state.form_fields}
+                        value={this.state.form_values}
+                        options={this.state.form_options}
+                        onChange={(form_values) => {this.setState({ form_values })}}/>
 
                     <View style={baseStyles.textInputContainer}>
                         <View style={baseStyles.textInputs}>
@@ -496,18 +560,29 @@ export default class NewGamblingSession extends React.Component {
                                         </Picker>
                                 })}
                             </View>
-                            <View style={baseStyles.textInputView}>
-                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Starting Amount" keyboardType="numeric" returnKeyType="done" onChangeText={(startAmount) => this.setState({startAmount})}/>
-                            </View>
-                            <View style={baseStyles.textInputView}>
-                                <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid="white" placeholder="Final amount" keyboardType="numeric" returnKeyType="done" onChangeText={(endAmount) => this.setState({endAmount})}/>
-                            </View>
                         </View>
                     </View>
-                    <View style={baseStyles.buttonsView}>
-                        <Button title="Submit game session" containerViewStyle={{width: "auto"}} onPress={this.saveNewGamblingSession.bind(this)}/>
+                    <View style={baseStyles.signupButton}>
+                        <Button style={baseStyles.signupButtonText}
+                                title="Save the new session"
+                                onPress={() => {
+                                    const value = this.refs.form.getValue();
+                                    // Form has been validated
+                                    if (value) {
+                                        this.setState({
+                                            startAmount: value.StartAmount,
+                                            endAmount: value.EndAmount,
+                                            duration: value.Duration
+                                        });
+                                        setTimeout(() => {
+                                            this.saveNewGamblingSession();
+                                            this.clearForm();
+                                        }, 0);
+                                    }
+                                }}
+                        />
+                        <Text style={baseStyles.errorText}> {this.state.error}</Text>
                     </View>
-                    <Text style={baseStyles.centeredText}>{this.state.error}</Text>
                 </ScrollView>
                 {this.state.loading &&
                 <View style={baseStyles.loading}>
@@ -518,3 +593,4 @@ export default class NewGamblingSession extends React.Component {
         );
     }
 }
+
