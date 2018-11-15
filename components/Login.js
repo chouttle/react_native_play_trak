@@ -167,7 +167,7 @@ export default class LoginPage extends React.Component {
         return (
             <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
                 <ScrollView style={baseStyles.scrollViewContainer}>
-                <Text style={baseStyles.titleMsg}>Play && Trak
+                <Text style={baseStyles.titleMsg}>Play & Trak
                     </Text>
                     <View style={{ justifyContent: 'center', alignItems: 'center'}}>
                         <Image style={{ flexShrink: 1}}

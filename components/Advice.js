@@ -78,7 +78,7 @@ class Advice extends React.Component {
         const pages = [];
         for(let i = 0; i < this.adviceItems.length; i++) {
             pages.push(
-                <View>
+                <View key={i}>
                     <Text style={baseStyles.adviceTitles}>
                         {this.adviceItems[i].title}
                     </Text>
@@ -93,7 +93,7 @@ class Advice extends React.Component {
 
     _renderItem ({item, index}) {
         return (
-            <ScrollView style={baseStyles.scrollViewContainer}>
+            <ScrollView key={index} style={baseStyles.scrollViewContainer}>
                 <Text style={baseStyles.adviceTitles}>{ item.title }</Text>
                 <Text style={baseStyles.adviceText}>{ item.text }</Text>
             </ScrollView>
