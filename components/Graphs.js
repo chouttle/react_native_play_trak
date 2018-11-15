@@ -11,8 +11,6 @@ class Graphs extends React.Component {
 
     constructor(props) {
         super(props);
-        const user = firebase.auth().currentUser;
-        const gsPath = `/gamblingSession`;
         this.state = {
             error: '',
             loading: true,
@@ -21,31 +19,17 @@ class Graphs extends React.Component {
             minOutcome: null,
             minDuration: null,
             maxDuration: null,
-            tempListSessions: [
-                {
-                    date: '2018-07-12',
-                    duration: 120,
-                    outcome: 504
-                },
-                {
-                    date: '2018-07-10',
-                    duration: 70,
-                    outcome: 44
-                },
-                {
-                    date: '2018-07-09',
-                    duration: 30,
-                    outcome: 4
-                }
-            ],
-            tempData: [ 50, 10, 40 ],
             timeline: 'weekly',
             timeOrBalance: 'time'
         };
+    }
+
+    componentDidMount() {
+        const user = firebase.auth().currentUser;
+        const gsPath = `/gamblingSession`;
         firebase.database().ref(gsPath).orderByChild('uid').equalTo(user.uid).once('value').then((snapshot) => {
             snapshot.forEach((session) => {
                 if(session.val().date.length <= 10 && session.val().duration && session.val().outcome) {
-                    console.log('session valid');
                     this.setState({listSession: this.state.listSessions.push({
                             date: session.val().date || 'Error',
                             duration: session.val().duration || null,
@@ -64,18 +48,11 @@ class Graphs extends React.Component {
                     if(this.state.maxOutcome == null || this.state.maxOutcome < session.val().outcome) {
                         this.setState({maxOutcome: session.val().outcome});
                     }
-                    console.log('done adding session');
                 }
             });
             this.setState({listSessions: this.state.listSessions.sort(this.sortSessionsByLatestDate)});
             this.setState({listSessions: this.state.listSessions.slice(0, 5)});
             this.setState({listSessions: this.state.listSessions.sort(this.sortSessionsByEarliestDate)});
-            console.log('in firebase setting tempData');
-            this.setState({tempData: [ 50, 10, 40, 95, -4, -24, 85, 91, 35, 53, -53, 24, 50, -20, -80 ]});
-            console.log('done setting tempData');
-            console.log(this.state.listSessions);
-            console.log("minOutcome", this.state.minOutcome);
-            console.log("maxOutcome", this.state.maxOutcome);
             this.setState({
                 error: '',
                 loading: false
@@ -113,11 +90,6 @@ class Graphs extends React.Component {
             });
     }
 
-    // checkData() {
-    //     console.log(this.state.listSessions);
-    //     console.log(this.state.tempData);
-    // }
-
     render() {
 
         const axesSvg = { fontSize: 10, fill: 'black', fontWeight: 'bold'};
@@ -125,16 +97,6 @@ class Graphs extends React.Component {
         const verticalContentInset = { top: 10, bottom: 10 };
         const xAxisHeight = 30;
         return <View style={baseStyles.container}>
-            {/*<View style={baseStyles.textInputView}>*/}
-            {/*/!*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*!/*/}
-            {/*<Picker*/}
-            {/*mode='dropdown'*/}
-            {/*selectedValue={this.state.timeline}*/}
-            {/*onValueChange={(itemValue, itemIndex) => this.setState({timeline: itemValue})}>*/}
-            {/*<Picker.Item label='Weekly Graph' value='weekly' />*/}
-            {/*<Picker.Item label='Monthly Graph' value='monthly' />*/}
-            {/*</Picker>*/}
-            {/*</View>*/}
 
             <Text style={baseStyles.welcomeMsg}>Graph of your last sessions</Text>
             <View style={baseStyles.textInputView}>
@@ -203,10 +165,6 @@ class Graphs extends React.Component {
                         data={this.state.listSessions}
                         yAccessor={({item}) => this.state.timeOrBalance === 'time' ? item.duration : item.outcome}
                         xAccessor={({index}) => index}
-                        // xAccessor={({ item }) => new Date(item.date)}
-                        // xScale= { scale.dateTime }
-                        // xAccessor={({ item }) => this.state.timeOrBalance === 'time' ? item.duration : item.outcome}
-                        // yAccessor={({ item }) => item.date}
                         gridMin={this.state.timeOrBalance === 'time' ? (this.state.minDuration < 30 ? 0 : this.state.minDuration - 30) : this.state.minOutcome - 50}
                         gridMax={this.state.timeOrBalance === 'time' ? this.state.maxDuration + 30 : this.state.maxOutcome + 50}
                         svg={{stroke: 'rgb(134, 65, 244)'}}
@@ -217,16 +175,13 @@ class Graphs extends React.Component {
                     <XAxis
                         style={{marginHorizontal: -10, height: xAxisHeight}}
                         data={this.state.listSessions}
-                        // xAccessor={({ item }) => Date.parse(item.date)}
-                        // formatLabel={(value, index) => moment(value).format('MM/DD/YYYY')}
-                        formatLabel={(value, index) => index === 4 ? 'Latest' : 5 - index}
+                        formatLabel={(value, index) => index === this.state.listSessions.length - 1 ? 'Latest' : this.state.listSessions.length - index}
                         contentInset={{left: 30, right: 30}}
                         svg={axesSvgY}
                         // numberOfTicks={5}
                     />
                 </View>
             </View>
-            {/*<Button containerViewStyle={{width: 'auto', marginLeft: 0}} title='Update' onPress={this.checkData.bind(this)}/>*/}
             {this.state.loading &&
             <View style={baseStyles.loading} pointerEvents='none'>
                 <ActivityIndicator size='large'/>

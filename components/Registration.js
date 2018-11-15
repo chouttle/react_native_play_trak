@@ -11,7 +11,7 @@ import {
     ScrollView,
     TouchableOpacity,
     Linking,
-    Button, KeyboardAvoidingView
+    Button, KeyboardAvoidingView, ActivityIndicator
 } from 'react-native';
 
 import FormValidation from 'tcomb-form-native'
@@ -27,7 +27,7 @@ const formStyles = {
     },
     controlLabel: {
         normal: {
-            color: "black",
+            color: "white",
             fontSize: 18,
             marginBottom: 7,
             fontWeight: '600'
@@ -39,6 +39,36 @@ const formStyles = {
             marginBottom: 7,
             fontWeight: '600'
         }
+    },
+    textbox: {
+        normal: {
+            ...Form.stylesheet.textbox.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.textbox.error,
+            backgroundColor: 'white'
+        }
+    },
+    select: {
+        normal: {
+            ...Form.stylesheet.select.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.select.error,
+            backgroundColor: 'white'
+        }
+    },
+    pickerContainer: {
+        normal: {
+            ...Form.stylesheet.pickerContainer.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.pickerContainer.error,
+            backgroundColor: 'white'
+        }
     }
 };
 
@@ -46,11 +76,6 @@ export default class Registration extends React.Component {
 
     constructor(props) {
         super(props);
-        // formStyles.textbox.normal.backgroundColor = 'white';
-        // formStyles.textbox.error.backgroundColor = 'white';
-        // formStyles.select.normal.backgroundColor = 'white';
-        // formStyles.pickerContainer.normal.backgroundColor = 'white';
-        // formStyles.select.error.backgroundColor = 'white';
         // Email Validation
         let valid_email = FormValidation.refinement(
             FormValidation.String, function (email) {
@@ -68,26 +93,41 @@ export default class Registration extends React.Component {
 
         // Year Validation
         let valid_year_of_birth = FormValidation.refinement(
-            FormValidation.String, function (str ) {
-                let num = Number(str);
+            FormValidation.Number, function (num ) {
+                // let num = Number(str);
                 // Needs to be an integer, no floating point edge case
                 if (!Number.isInteger(num)) {
                     return false;
                 }
-                return 1900 <= num && num <= 2018;
+                return 1850 <= num && num <= (new Date()).getFullYear();
             }
         );
+
+
         // Enums implemented as a picker
         let valid_gender = FormValidation.enums({
             Male: "Male",
             Female: "Female"
         });
 
+        let valid_strict_positive_number = FormValidation.refinement(
+            FormValidation.Number, function (num ) {
+                // let num = Number(str);
+                // Needs to be an integer, no floating point edge case
+                if (!Number.isFinite(num)) {
+                    return false;
+                }
+                return num > 0;
+            }
+        );
+
         let form_fields = FormValidation.struct({
             Email: valid_email,
             Password: valid_password,
             YearOfBirth: valid_year_of_birth,
-            Gender: valid_gender
+            Gender: valid_gender,
+            DailyBudgetLimit: valid_strict_positive_number,
+            DailyTimeLimit: valid_strict_positive_number,
         });
 
         // Initial state
@@ -107,15 +147,28 @@ export default class Registration extends React.Component {
     getFormOptions () {
         let form_options =  {
             fields: {
-                Email: { error: 'Please enter a valid email' },
-                YearOfBirth: { error: 'Please enter a valid year of birth' },
+                Email: {
+                    keyboardType: 'email-address',
+                    error: 'Please enter a valid email'
+                },
+                YearOfBirth: { returnKeyType: 'done', error: 'Please enter a valid year of birth ([1850 - ' + (new Date()).getFullYear() +  '])' },
                 Password: {
                     error: 'Your password must be at least 6 characters',
                     secureTextEntry: true,
                 },
                 Gender: {
                     error: "Please select your gender"
-                }
+                },
+                DailyBudgetLimit: {
+                    returnKeyType: 'done',
+                    label: 'Daily Budget Limit ($)',
+                    error: "Please enter a number above 0"
+                },
+                DailyTimeLimit: {
+                    returnKeyType: 'done',
+                    label: 'Daily Budget Limit (min)',
+                    error: 'Please enter a number above 0'
+                },
             },
             stylesheet: formStyles
         };
@@ -123,7 +176,6 @@ export default class Registration extends React.Component {
     }
 
     createUserInFirebase(){
-        console.log('STARTING CREATING USER');
         this.setState({
             error: '',
             loading: true
@@ -133,10 +185,6 @@ export default class Registration extends React.Component {
                 error: 'Successful!',
                 loading: false
             });
-            console.log('authData');
-            console.log(authData);
-            console.log('USER CREATED with user.uid: ' + authData.user.uid);
-            console.log('CALLING USERDATA FUNCTION');
             this.writeUserData(authData.user.uid);
         }).catch((error) => {
             this.setState({
@@ -147,8 +195,6 @@ export default class Registration extends React.Component {
     }
 
     writeUserData(uid){
-        console.log('USER DATA FUNCTION');
-        console.log(this.state.gender);
         this.setState({
             error: '',
             loading: true
@@ -156,13 +202,11 @@ export default class Registration extends React.Component {
         const userPath = `/users/${uid}`;
         const userSettings = {
             yob: this.state.year_of_birth,
-            sex: this.state.gender
+            sex: this.state.gender,
+            dailyLimit: this.state.budgetLimit,
+            dailyTimeLimit: this.state.timeLimit
         };
-        console.log('userSettings');
-        console.log(userSettings);
-        console.log('pushing data to firebase');
         firebase.database().ref(userPath).set(userSettings).then(async () => {
-            console.log('data supposedly pushed to firebase.');
             try{
                 await AsyncStorage.setItem('userToken', uid);
             } catch(error){
@@ -175,10 +219,8 @@ export default class Registration extends React.Component {
                 error: 'Successful!',
                 loading: false
             });
-            console.log('navigating to app');
             this.props.navigation.navigate('App');
         }).catch((error) => {
-            console.log('caught an error');
             this.setState({
                 error: 'Could not save user data: ' + error,
                 loading: false
@@ -188,7 +230,7 @@ export default class Registration extends React.Component {
 
     render() {
         return (
-            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
+            <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={80} behavior="padding" enabled>
                 <ScrollView style={baseStyles.scrollViewContainer}>
                     <Form
                         ref="form"
@@ -208,7 +250,9 @@ export default class Registration extends React.Component {
                                             email: value.Email.trim(),
                                             password: value.Password,
                                             year_of_birth: value.YearOfBirth,
-                                            gender: value.Gender
+                                            gender: value.Gender,
+                                            budgetLimit: value.DailyBudgetLimit,
+                                            timeLimit: value.DailyTimeLimit
                                         });
                                         setTimeout(() => {
                                             this.createUserInFirebase();
@@ -219,6 +263,11 @@ export default class Registration extends React.Component {
                         <Text style={baseStyles.errorText}> {this.state.error}</Text>
                     </View>
                 </ScrollView>
+                {this.state.loading &&
+                <View style={baseStyles.loading}>
+                    <ActivityIndicator size='large' />
+                </View>
+                }
             </KeyboardAvoidingView>
         );
     }

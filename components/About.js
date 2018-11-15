@@ -18,32 +18,32 @@ class About extends React.Component {
     render() {
         return (
             <ScrollView style={baseStyles.scrollViewContainer}>
-            <View style={baseStyles.container}>
-                <View style={{flexDirection: 'row', marginHorizontal: 5}}>
-                    <Image style={{ flexShrink: 1}}
-                           resizeMode='contain'
-                           source={require('../assets/ic-logo.png')}
-                    />
-                </View>
-                <Text style={baseStyles.homeText}>About Us</Text>
-                <View style={{marginHorizontal: '10%'}}>
-                    <Text style={baseStyles.whiteText}>
-                        For over 20 years, the International Center for Youth Gambling Problems and High-Risk Behaviours at McGill University has been at the forefront of leading-edge research aimed at identifying and understanding the critical factors related to youth gambling issues.
-                        In Addition to its many research endeavors, the center also provides treatment for youth experiencing gambling problems.{'\n'}
-                    </Text>
-                    <Text style={baseStyles.whiteText}>
-                        For more information, visit us on our website:&nbsp;
-                        <Text style={{color: 'blue'}} onPress={() => Linking.openURL('http://www.youthgambling.com')}>
-                            http://www.youthgambling.com
+                <View style={baseStyles.container}>
+                    <View style={{flexDirection: 'row', marginHorizontal: 5}}>
+                        <Image style={{ flexShrink: 1}}
+                               resizeMode='contain'
+                               source={require('../assets/ic-logo.png')}
+                        />
+                    </View>
+                    <Text style={baseStyles.homeText}>About Us</Text>
+                    <View style={{marginHorizontal: '10%'}}>
+                        <Text style={baseStyles.whiteText}>
+                            For over 20 years, the International Center for Youth Gambling Problems and High-Risk Behaviours at McGill University has been at the forefront of leading-edge research aimed at identifying and understanding the critical factors related to youth gambling issues.
+                            In Addition to its many research endeavors, the center also provides treatment for youth experiencing gambling problems.{'\n'}
                         </Text>
-                    </Text>
+                        <Text style={baseStyles.whiteText}>
+                            For more information, visit us on our website:&nbsp;
+                            <Text style={{color: 'blue'}} onPress={() => Linking.openURL('http://www.youthgambling.com')}>
+                                http://www.youthgambling.com
+                            </Text>
+                        </Text>
+                    </View>
                 </View>
                 {this.state.loading &&
                 <View style={baseStyles.loading}>
                     <ActivityIndicator size='large' />
                 </View>
                 }
-            </View>
             </ScrollView>
         );
     }

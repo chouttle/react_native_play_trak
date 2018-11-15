@@ -125,6 +125,11 @@ module.exports = StyleSheet.create({
         textAlign: 'center',
         color: 'white'
     },
+    updatingSessionTitle: {
+        fontSize: 24,
+        textAlign: 'center',
+        color: 'white'
+    },
     adviceTitles: {
         fontSize: 24,
         textAlign: 'center',

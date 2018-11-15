@@ -21,8 +21,6 @@ class CalendarStats extends React.Component {
 
     constructor(props) {
         super(props);
-        const user = firebase.auth().currentUser;
-        const gsPath = `/gamblingSession`;
         this.state = {
             error: '',
             loading: true,
@@ -35,17 +33,20 @@ class CalendarStats extends React.Component {
             timeline: 'weekly',
             timeOrBalance: 'time'
         };
+    }
+
+    componentDidMount() {
+        const user = firebase.auth().currentUser;
+        const gsPath = `/gamblingSession`;
         firebase.database().ref(gsPath).orderByChild('uid').equalTo(user.uid).once('value').then((snapshot) => {
             snapshot.forEach((session) => {
                 if(session.val().date.length <= 10 && session.val().duration && session.val().outcome) {
-                    console.log('session valid');
                     this.setState({listSession: this.state.listSessions.push({
                             date: session.val().date || 'Error',
                             duration: session.val().duration || null,
                             outcome: session.val().outcome || null
                         })
                     });
-                    console.log('session valid 2');
                     const markedDateStyle = {
                         customStyles: {
                             container: {
@@ -62,16 +63,11 @@ class CalendarStats extends React.Component {
                         }
                     };
                     const markedDatesObj = {... this.state.markedDates, ...{[session.val().date]: markedDateStyle }};
-                    console.log('session valid 3');
                     this.setState({
                         markedDates: markedDatesObj
                     });
-                    console.log('session valid 4');
-                    console.log('done adding session');
                 }
             });
-            console.log(this.state.listSessions);
-            console.log("markedDates", this.state.markedDates);
             this.setState({
                 error: '',
                 loading: false

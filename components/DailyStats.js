@@ -3,10 +3,86 @@ import {ActivityIndicator, Button, KeyboardAvoidingView, Platform, ScrollView, T
 import firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 
+import FormValidation from 'tcomb-form-native'
+
+const Form = FormValidation.form.Form;
+
+const formStyles = {
+    ...Form.stylesheet,
+    formGroup: {
+        normal: {
+            marginBottom: 10,
+        },
+    },
+    controlLabel: {
+        normal: {
+            color: "white",
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+            borderBottomColor: 'white'
+        },
+        // Style applied when a validation error occours
+        error: {
+            color: 'red',
+            fontSize: 18,
+            marginBottom: 7,
+            fontWeight: '600',
+        }
+    },
+    textbox: {
+        normal: {
+            ...Form.stylesheet.textbox.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.textbox.error,
+            backgroundColor: 'white'
+        }
+    },
+    select: {
+        normal: {
+            ...Form.stylesheet.select.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.select.error,
+            backgroundColor: 'white'
+        }
+    },
+    pickerContainer: {
+        normal: {
+            ...Form.stylesheet.pickerContainer.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.pickerContainer.error,
+            backgroundColor: 'white'
+        }
+    }
+};
+
 class DailyStats extends React.Component {
 
     constructor(props) {
         super(props);
+
+        let valid_strict_positive_number = FormValidation.refinement(
+            FormValidation.Number, function (num ) {
+                // let num = Number(str);
+                // Needs to be an integer, no floating point edge case
+                if (!Number.isFinite(num)) {
+                    return false;
+                }
+                return num > 0;
+            }
+        );
+
+        let form_fields = FormValidation.struct({
+            DailyBudgetLimit: valid_strict_positive_number,
+            DailyTimeLimit: valid_strict_positive_number
+        });
+
         const { params } = this.props.navigation.state;
         this.state = {
             budgetLimit: '0',
@@ -15,8 +91,22 @@ class DailyStats extends React.Component {
             endingAmount: '?',
             outcome: '?',
             error: '',
-            loading: false
+            loading: false,
+            form_fields: form_fields,
+            form_values: {},
+            form_options: this.getFormOptions()
         };
+    }
+
+    getFormOptions () {
+        let form_options =  {
+            fields: {
+                DailyBudgetLimit: { returnKeyType: 'done', label: 'Daily Budget Limit ($)', error: 'Please enter a number above 0' },
+                DailyTimeLimit: { returnKeyType: 'done', label: 'Daily Time Limit (min)', error: 'Please enter a number above 0' }
+            },
+            stylesheet: formStyles
+        };
+        return form_options;
     }
 
     componentDidMount() {
@@ -28,12 +118,14 @@ class DailyStats extends React.Component {
         const userPath = `/users/${user.uid}`;
         firebase.database().ref(userPath).once('value').then((snapshot) => {
             const userSettings = snapshot.val();
-            console.log('userSettings');
-            console.log(userSettings);
             this.setState({
                 userSettings: userSettings,
                 budgetLimit: userSettings.dailyLimit || '0',
                 timeLimit: userSettings.dailyTimeLimit || '0',
+                form_values: {
+                    DailyBudgetLimit: userSettings.dailyLimit,
+                    DailyTimeLimit: userSettings.dailyTimeLimit
+                },
                 error: '',
                 loading: false
             });
@@ -126,7 +218,6 @@ class DailyStats extends React.Component {
             dailyLimit: this.state.budgetLimit,
             dailyTimeLimit: this.state.timeLimit
         }).then(() => {
-            console.log('daily limits were successfully set');
             this.setState({
                 error: 'Success!',
                 loading: false
@@ -138,7 +229,6 @@ class DailyStats extends React.Component {
                 });
             }, 5000)
         }).catch((error) => {
-            console.log('error happened while updating daily limits: ' + error);
             this.setState({
                 error: 'Could not save user data: ' + error,
                 loading: false
@@ -172,24 +262,42 @@ class DailyStats extends React.Component {
 
 
                     <Text style={[baseStyles.welcomeMsg, baseStyles.centeredText]}>Update your daily limits: </Text>
-                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily budget limit ($)</Text>
-                    <View style={baseStyles.textInputView}>
-                        <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Budget Limit ($)' keyboardType="numeric" returnKeyType="done" value={this.state.budgetLimit + ''} onChangeText={(budgetLimit) => this.setState({budgetLimit})}/>
-                    </View>
-                    <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily time limit (minutes)</Text>
-                    <View style={baseStyles.textInputView}>
-                        <TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Time Limit (minutes)' keyboardType="numeric" returnKeyType="done" value={this.state.timeLimit + ''} onChangeText={(timeLimit) => this.setState({timeLimit})}/>
-                    </View>
+                    {/*<Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily budget limit ($)</Text>*/}
+                    {/*<View style={baseStyles.textInputView}>*/}
+                        {/*<TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Budget Limit ($)' keyboardType="numeric" returnKeyType="done" value={this.state.budgetLimit + ''} onChangeText={(budgetLimit) => this.setState({budgetLimit})}/>*/}
+                    {/*</View>*/}
+                    {/*<Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Daily time limit (minutes)</Text>*/}
+                    {/*<View style={baseStyles.textInputView}>*/}
+                        {/*<TextInput style={baseStyles.textInput} placeholderTextColor={Platform.select({ios: '', android: 'white'})} underlineColorAndroid='white' placeholder='Time Limit (minutes)' keyboardType="numeric" returnKeyType="done" value={this.state.timeLimit + ''} onChangeText={(timeLimit) => this.setState({timeLimit})}/>*/}
+                    {/*</View>*/}
+                    <Form
+                        ref="form"
+                        type={this.state.form_fields}
+                        value={this.state.form_values}
+                        options={this.state.form_options}
+                        onChange={(form_values) => {this.setState({ form_values })}}/>
                     <View style={baseStyles.buttonsView}>
-                        <Button title='Update the limits' onPress={this.updateLimits.bind(this)}/>
+                        <Button title='Update the limits' onPress={() => {
+                            const value = this.refs.form.getValue();
+                            // Form has been validated
+                            if (value) {
+                                this.setState({
+                                    budgetLimit: value.DailyBudgetLimit,
+                                    timeLimit: value.DailyTimeLimit
+                                });
+                                setTimeout(() => {
+                                    this.updateLimits();
+                                }, 0);
+                            }
+                        }}/>
                     </View>
                     <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
-                    {this.state.loading &&
-                    <View style={baseStyles.loading}>
-                        <ActivityIndicator size='large' />
-                    </View>
-                    }
                 </ScrollView>
+                {this.state.loading &&
+                <View style={baseStyles.loading}>
+                    <ActivityIndicator size='large' />
+                </View>
+                }
             </KeyboardAvoidingView>
         );
     }

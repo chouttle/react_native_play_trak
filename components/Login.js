@@ -28,7 +28,7 @@ const formStyles = {
     },
     controlLabel: {
         normal: {
-            color: "black",
+            color: "white",
             fontSize: 18,
             marginBottom: 7,
             fontWeight: '600',
@@ -41,6 +41,36 @@ const formStyles = {
             marginBottom: 7,
             fontWeight: '600',
         }
+    },
+    textbox: {
+        normal: {
+            ...Form.stylesheet.textbox.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.textbox.error,
+            backgroundColor: 'white'
+        }
+    },
+    select: {
+        normal: {
+            ...Form.stylesheet.select.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.select.error,
+            backgroundColor: 'white'
+        }
+    },
+    pickerContainer: {
+        normal: {
+            ...Form.stylesheet.pickerContainer.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.pickerContainer.error,
+            backgroundColor: 'white'
+        }
     }
 };
 
@@ -48,11 +78,6 @@ export default class LoginPage extends React.Component {
 
     constructor(props) {
         super(props);
-        formStyles.textbox.normal.backgroundColor = 'white';
-        formStyles.textbox.error.backgroundColor = 'white';
-        formStyles.select.normal.backgroundColor = 'white';
-        formStyles.pickerContainer.normal.backgroundColor = 'white';
-        formStyles.select.error.backgroundColor = 'white';
         // Initialize Firebase
         const config = {
             apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
@@ -99,21 +124,15 @@ export default class LoginPage extends React.Component {
             form_values: {},
             form_options: this.getFormOptions()
         }
-
-        // this.state = {
-        //     textEmail: '',
-        //     textPwd: '',
-        //     userId: '',
-        //     error: '',
-        //     loading: false
-        // };
     }
-
     
     getFormOptions () {
         let form_options =  {
             fields: {
-                Email: { error: 'Please enter a valid email' },
+                Email: {
+                    keyboardType: 'email-address',
+                    error: 'Please enter a valid email'
+                },
                 Password: {
                     error: 'Your password must be at least 6 characters',
                     secureTextEntry: true,
@@ -189,6 +208,11 @@ export default class LoginPage extends React.Component {
                         <Text style={baseStyles.errorText}> {this.state.error}</Text>
                     </View>
                 </ScrollView>
+                {this.state.loading &&
+                <View style={baseStyles.loading}>
+                    <ActivityIndicator size='large' />
+                </View>
+                }
             </KeyboardAvoidingView>
         );
     }

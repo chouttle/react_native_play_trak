@@ -11,7 +11,7 @@ export default class UserSettings extends React.Component {
         super(props);
         for(let i = new Date().getFullYear() - 18; i >= 1900; i--) {
             this.yearsOfBirth.push(i + '');
-            this.yearsOfBirthPicks.push(<Picker.Item value={i} label={i + ''} />);
+            this.yearsOfBirthPicks.push(<Picker.Item value={i} key={i} label={i + ''} />);
         }
         this.state = {
             error: '',
@@ -26,8 +26,6 @@ export default class UserSettings extends React.Component {
         const userPath = `/users/${user.uid}`;
         firebase.database().ref(userPath).once('value').then((snapshot) => {
             userSettings = snapshot.val();
-            console.log('userSettings');
-            console.log(userSettings);
             this.setState({
                 user: user,
                 userSettings: userSettings,
@@ -38,8 +36,6 @@ export default class UserSettings extends React.Component {
                 gender: userSettings ? userSettings.sex : '',
                 loading: false
             });
-            console.log('this.state.yob');
-            console.log(this.state.yob);
         }).catch((error) => {
             this.setState({
                 error: 'Could not load the user settings: ' + error,
@@ -53,6 +49,20 @@ export default class UserSettings extends React.Component {
             error: '',
             loading: true
         });
+        if (this.state.yob === '' || this.state.yob === null) {
+            this.setState({
+                error: 'Please select your year of birth.',
+                loading: false
+            });
+            return;
+        }
+        if(this.state.gender === '') {
+            this.setState({
+                error: 'Please select your gender.',
+                loading: false
+            });
+            return;
+        }
         const userPath = `/users/${this.state.user.uid}`;
         const userSettings = this.state.userSettings;
         userSettings.yob = this.state.yob;
@@ -131,7 +141,7 @@ export default class UserSettings extends React.Component {
                         {Platform.select({
                             ios: null,
                             android:
-                                <Text  style={[baseStyles.touchBtnText, baseStyles.whiteText]}>Date of Birth</Text>
+                                <Text style={[baseStyles.touchBtnText, baseStyles.whiteText, {marginTop: 20}]}>Year of Birth</Text>
                         })}
                         <View style={[baseStyles.textInputView]}>
                             {Platform.select({
@@ -148,7 +158,7 @@ export default class UserSettings extends React.Component {
                                         mode='dropdown'
                                         selectedValue={this.state.yob}
                                         onValueChange={(itemValue, itemIndex) => this.setState({yob: itemValue})}>
-                                        <Picker.Item style={baseStyles.whiteText} label='Year of Birth' value='' />
+                                        <Picker.Item style={baseStyles.whiteText} label='Year of Birth' key='Year of Birth' value='' />
                                         {this.yearsOfBirthPicks}
                                     </Picker>
                             })}
@@ -159,7 +169,7 @@ export default class UserSettings extends React.Component {
                 <View style={baseStyles.buttonsView}>
                     <Button title='Save' containerViewStyle={{width: 'auto'}} onPress={this.saveUserSettingsToFirebase.bind(this)}/>
                 </View>
-                <Text style={baseStyles.centeredText}>{this.state.error}</Text>
+                <Text style={baseStyles.errorText}>{this.state.error}</Text>
                 {this.state.loading &&
                 <View style={baseStyles.loading} pointerEvents='none'>
                     <ActivityIndicator size='large' />
@@ -169,5 +179,3 @@ export default class UserSettings extends React.Component {
         );
     }
 }
-
-// note that since this.state.yob is initialized to null, on iOS the buttons are "Gender" and then "Born in null"

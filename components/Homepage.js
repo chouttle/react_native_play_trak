@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import {ActivityIndicator, ScrollView, Text, View} from 'react-native';
 import firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 
@@ -8,9 +8,8 @@ class Homepage extends React.Component {
     constructor(props) {
         super(props);
         const { params } = this.props.navigation.state;
-        const user = firebase.auth().currentUser;
         this.state = {
-            user: user,
+            user: firebase.auth().currentUser,
             currentBalance: '?',
             maxWon: '?',
             maxLost: '?',
@@ -21,12 +20,15 @@ class Homepage extends React.Component {
             error: "",
             loading: false
         };
+    }
+
+    componentDidMount() {
         this.setState({
             error: '',
             loading: true
         });
         const gsPath = `/gamblingSession`;
-        firebase.database().ref(gsPath).orderByChild('uid').equalTo(user.uid).once('value').then((snapshot) => {
+        firebase.database().ref(gsPath).orderByChild('uid').equalTo(this.state.user.uid).once('value').then((snapshot) => {
             snapshot.forEach((session) => {
                 const sessionDate = session.val().date;
                 const newDate = new Date();
@@ -114,6 +116,11 @@ class Homepage extends React.Component {
                 <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Max amount lost: {this.state.maxLost}</Text>
                 <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Total playing time: {this.state.totalPlayingTime}</Text>
                 <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
+                {this.state.loading &&
+                <View style={baseStyles.loading}>
+                    <ActivityIndicator size='large' />
+                </View>
+                }
             </View>
         );
     }

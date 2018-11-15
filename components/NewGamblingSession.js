@@ -9,6 +9,7 @@ const baseStyles = require("../styles/baseStyles");
 
 
 import FormValidation from 'tcomb-form-native'
+import { AsyncStorage } from "react-native"
 
 const Form = FormValidation.form.Form;
 
@@ -21,7 +22,7 @@ const formStyles = {
     },
     controlLabel: {
         normal: {
-            color: "black",
+            color: "white",
             fontSize: 18,
             marginBottom: 7,
             fontWeight: '600',
@@ -34,10 +35,40 @@ const formStyles = {
             marginBottom: 7,
             fontWeight: '600',
         }
+    },
+    textbox: {
+        normal: {
+            ...Form.stylesheet.textbox.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.textbox.error,
+            backgroundColor: 'white'
+        }
+    },
+    select: {
+        normal: {
+            ...Form.stylesheet.select.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.select.error,
+            backgroundColor: 'white'
+        }
+    },
+    pickerContainer: {
+        normal: {
+            ...Form.stylesheet.pickerContainer.normal,
+            backgroundColor: 'white'
+        },
+        error: {
+            ...Form.stylesheet.pickerContainer.error,
+            backgroundColor: 'white'
+        }
     }
 };
 let gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
-'Lottery tickets/scratch cards', 'Other'];
+    'Lottery tickets/scratch cards', 'Other'];
 let gameModes = ['Online', 'Offline'];
 
 export default class NewGamblingSession extends React.Component {
@@ -50,8 +81,8 @@ export default class NewGamblingSession extends React.Component {
         super(props);
 
         let valid_positive_number = FormValidation.refinement(
-            FormValidation.String, function (str ) {
-                let num = Number(str);
+            FormValidation.Number, function (num ) {
+                // let num = Number(str);
                 // Needs to be an integer, no floating point edge case
                 if (!Number.isFinite(num)) {
                     return false;
@@ -66,7 +97,6 @@ export default class NewGamblingSession extends React.Component {
             EndAmount: valid_positive_number,
         });
 
-        const { params } = this.props.navigation.state;
         const user = firebase.auth().currentUser;
 
         const currentDateTime = new Date();
@@ -76,8 +106,9 @@ export default class NewGamblingSession extends React.Component {
 
         this.state = {
             user: user,
-            alertDailyLimit: {},
-            alertNormativeFeedback: {},
+            editId: 0,
+            alertDailyLimit: null,
+            alertNormativeFeedback: null,
             budgetLimit: '',
             timeLimit: '',
             previousSessions: [],
@@ -105,13 +136,88 @@ export default class NewGamblingSession extends React.Component {
         };
     }
 
-    
+    componentDidMount() {
+        const retrieveData = async () => {
+            try {
+                const value = await AsyncStorage.getItem('editId');
+                if (value !== null) {
+                    // We have data!!
+                    this.setState({
+                        editId: value
+                    });
+                    this.loadSessionToBeUpdated(value);
+                    let setData = async () => {
+                        try {
+                            await AsyncStorage.removeItem('editId');
+                            // {id: item.id, editing: true});
+                        } catch (error) {
+                            // Error saving data
+                            console.log('error removing AsyncStorage: ' + error);
+                        }
+                    };
+                    setData();
+                } else {
+                    this.setState({
+                        editId: value
+                    });
+                }
+            } catch (error) {
+                console.log('error retrieving AsyncStorage: ' + error);
+                // Error retrieving data
+            }
+        };
+        retrieveData();
+    }
+
+    loadSessionToBeUpdated(editId) {
+        const user = firebase.auth().currentUser;
+        const gsPath = `/gamblingSession/` + editId;
+        firebase.database().ref(gsPath).once('value').then((snapshot) => {
+            const sess = snapshot.val();
+            this.setState({
+                gameType: sess.game,
+                gameMode: sess.mode,
+                endAmount: sess.finalAmount,
+                startDate: new Date(sess.date.replace(/-/g, '\/')),
+                startTimeHours: sess.startTime.split(':')[0],
+                startTimeMinutes: sess.startTime.split(':')[1],
+                duration: sess.duration,
+                startingAmount: sess.startingAmount,
+                form_values: {
+                    StartAmount: sess.startingAmount,
+                    EndAmount: sess.finalAmount,
+                    Duration: sess.duration
+                }
+            });
+            // snapshot.forEach((session) => {
+            //     if(session.val().date.length <= 10){
+            //         this.setState({ previousSession: this.state.previousSessions.push({
+            //                 id: session.key || 'No id',
+            //                 date: session.val().date || 'No date',
+            //                 game: session.val().game || 'No game',
+            //                 duration: session.val().duration || '?',
+            //                 outcome: session.val().outcome || '?'
+            //             })});
+            //     }
+            // });
+            this.setState({
+                error: '',
+                loading: false
+            });
+        }).catch((error) => {
+            this.setState({
+                error: 'Could not load the data: ' + error,
+                loading: false
+            });
+        });
+    }
+
     getFormOptions () {
         let form_options =  {
             fields: {
-                StartAmount: { error: 'Please enter a valid number' },
-                EndAmount: { error: 'Please enter a valid number' },
-                Duration: { error: 'Please enter a valid number' }
+                StartAmount: { returnKeyType: 'done', error: 'Please enter a positive number' },
+                EndAmount: { returnKeyType: 'done', error: 'Please enter a positive number' },
+                Duration: { returnKeyType: 'done', error: 'Please enter a positive number' }
             },
             stylesheet: formStyles
         };
@@ -136,23 +242,11 @@ export default class NewGamblingSession extends React.Component {
             return;
         }
         const gsPath = `/gamblingSession`;
-        // const lastEndDate = new Date(this.state.endDate);
         const lastStartDate = new Date(this.state.startDate);
         if(Platform.OS === 'android'){
-            // lastEndDate.setHours(this.state.endTimeHours);
-            // lastEndDate.setMinutes(this.state.endTimeMinutes);
             lastStartDate.setHours(this.state.startTimeHours);
             lastStartDate.setMinutes(this.state.startTimeMinutes);
         }
-        // const diff = lastEndDate - lastStartDate;
-        // if(diff <= 0) {
-        //     this.setState({
-        //         error: "The end date and time must be after the start date and time.",
-        //         loading: false
-        //     });
-        //     return;
-        // }
-        // const duration = Math.floor((diff/1000)/60);
         if (this.state.duration <= 0) {
             this.setState({
                 error: "The duration needs to be a positive number and cannot be 0.",
@@ -178,49 +272,37 @@ export default class NewGamblingSession extends React.Component {
             startingAmount: this.state.startAmount,
             uid: this.state.user.uid
         }).then(() => {
-            // this.setState({
-            //     error: 'Success!',
-            //     loading: false
-            // });
-            // Alert.alert("Congratulations",
-            //     "You have gambled",
-            //     [
-            //         {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
-            //         {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
-            //         {text: 'OK', onPress: () => console.log('OK Pressed')}
-            //     ],
-            //     { cancelable: false });
             this.loadDataForAlert().then(() => {
-                this.alertDailyLimits();
-                this.alertNormativeFeedback();
-                setTimeout(() => {
-                    if(Platform.OS === 'ios'){
-                        if(this.state.alertDailyLimit.title){
-                            Alert.alert(this.state.alertDailyLimit.title,
-                                this.state.alertDailyLimit.message,
-                                this.state.alertDailyLimit.buttons);
+                this.alertDailyLimits().then(() => {
+                    this.alertNormativeFeedback().then(() => {
+                        if(Platform.OS === 'ios'){
+                            if(this.state.alertDailyLimit){
+                                Alert.alert(this.state.alertDailyLimit.title,
+                                    this.state.alertDailyLimit.message,
+                                    this.state.alertDailyLimit.buttons);
+                            }
+                            if(this.state.alertNormativeFeedback) {
+                                Alert.alert(this.state.alertNormativeFeedback.title,
+                                    this.state.alertNormativeFeedback.message,
+                                    this.state.alertNormativeFeedback.buttons);
+                            }
+                        } else {
+                            if(this.state.alertDailyLimit && this.state.alertNormativeFeedback) {
+                                Alert.alert(this.state.alertDailyLimit.title + ' && ' + this.state.alertNormativeFeedback.title,
+                                    this.state.alertDailyLimit.message + '\n\n' + this.state.alertNormativeFeedback.message,
+                                    this.state.alertDailyLimit.buttons);
+                            } else if(this.state.alertDailyLimit) {
+                                Alert.alert(this.state.alertDailyLimit.title,
+                                    this.state.alertDailyLimit.message,
+                                    this.state.alertDailyLimit.buttons);
+                            } else if(this.state.alertNormativeFeedback) {
+                                Alert.alert(this.state.alertNormativeFeedback.title,
+                                    this.state.alertNormativeFeedback.message,
+                                    this.state.alertNormativeFeedback.buttons);
+                            }
                         }
-                        if(this.state.alertNormativeFeedback.title) {
-                            Alert.alert(this.state.alertNormativeFeedback.title,
-                                this.state.alertNormativeFeedback.message,
-                                this.state.alertNormativeFeedback.buttons);
-                        }
-                    } else {
-                        if(this.state.alertDailyLimit.title && this.state.alertNormativeFeedback.title) {
-                            Alert.alert(this.state.alertDailyLimit.title + ' && ' + this.state.alertNormativeFeedback.title,
-                                this.state.alertDailyLimit.message + '\n\n' + this.state.alertNormativeFeedback.message,
-                                this.state.alertDailyLimit.buttons);
-                        } else if(this.state.alertDailyLimit.title) {
-                            Alert.alert(this.state.alertDailyLimit.title,
-                                this.state.alertDailyLimit.message,
-                                this.state.alertDailyLimit.buttons);
-                        } else if(this.state.alertNormativeFeedback.title) {
-                            Alert.alert(this.state.alertNormativeFeedback.title,
-                                this.state.alertNormativeFeedback.message,
-                                this.state.alertNormativeFeedback.buttons);
-                        }
-                    }
-                }, 0);
+                    });
+                });
             });
             setTimeout(() => {
                 this.setState({
@@ -236,14 +318,74 @@ export default class NewGamblingSession extends React.Component {
         });
     }
 
-    loadDataForAlert() {
-        console.log("Entering loadDataForAlerts");
+    saveUpdatedGamblingSession(){
+        this.setState({
+            error: '',
+            loading: true
+        });
+
+        if (this.state.startAmount === '' || this.state.endAmount === '') {
+            this.setState({
+                error: "The start and end amount need to be set to a numeric value.",
+                loading: false
+            });
+            return;
+        }
         const gsPath = `/gamblingSession`;
+        const lastStartDate = new Date(this.state.startDate);
+        if(Platform.OS === 'android'){
+            lastStartDate.setHours(this.state.startTimeHours);
+            lastStartDate.setMinutes(this.state.startTimeMinutes);
+        }
+        if (this.state.duration <= 0) {
+            this.setState({
+                error: "The duration needs to be a positive number and cannot be 0.",
+                loading: false
+            });
+            return;
+        }
+
+        const newGamblingSessionRef = this.state.editId;
+        let stringMonth = (lastStartDate.getMonth() + 1) < 10 ? '0' + (lastStartDate.getMonth() + 1) : '' + (lastStartDate.getMonth() + 1);
+        let stringDay = lastStartDate.getDate() < 10 ? '0' + lastStartDate.getDate() : lastStartDate.getDate();
+        firebase.database().ref(gsPath + `/${newGamblingSessionRef}`).update({
+            date: lastStartDate.getFullYear() + '-' + stringMonth + '-' + stringDay,
+            duration: parseInt(this.state.duration, 10),
+            // email: this.state.user.email,
+            finalAmount: this.state.endAmount,
+            outcome: this.state.endAmount - this.state.startAmount,
+            game: this.state.gameType,
+            // key: newGamblingSessionRef,
+            mode: this.state.gameMode,
+            startTime: lastStartDate.getHours() + ':' + lastStartDate.getMinutes(),
+            startingAmount: this.state.startAmount
+            // uid: this.state.user.uid
+        }).then(() => {
+            this.setState({
+                error: '',
+                loading: false
+            });
+            this.props.navigation.navigate('SessionHistory');
+        }).catch((error) => {
+            this.setState({
+                error: 'Error: ' + error,
+                loading: false
+            });
+        });
+    }
+
+    loadDataForAlert() {
+        const gsPath = `/gamblingSession`;
+        let totalDuration = 0;
+        let totalStartingAmounts = 0;
+        let totalNumSessions = 0;
+        this.setState({previousSessions: []});
         return firebase.database().ref(gsPath).orderByChild('uid').equalTo(this.state.user.uid).once('value').then((snapshot) => {
             snapshot.forEach((session) => {
                 if(session.val().date.length <= 10){
                     this.setState({ previousSession: this.state.previousSessions.push({
                             date: session.val().date || 'No date',
+                            startTime: session.val().startTime || 'No start time',
                             game: session.val().game || 'No game',
                             duration: session.val().duration || '?',
                             startingAmount: session.val().startingAmount || '?',
@@ -252,18 +394,20 @@ export default class NewGamblingSession extends React.Component {
                         })
                     });
                     if(session.val().date === (new Date()).getFullYear() + '-' + ((new Date()).getMonth() + 1) + '-' + (new Date()).getDate()) {
-                        this.setState({todayTotalDuration: this.state.todayTotalDuration + session.val().duration});
-                        this.setState({todayTotalStartingAmounts: this.state.todayTotalStartingAmounts + session.val().startingAmount});
+                        totalDuration += Number(session.val().duration);
+                        totalStartingAmounts += Number(session.val().startingAmount);
                     }
-                    this.setState({totalNumSessions: this.state.totalNumSessions + 1});
+                    totalNumSessions++;
                 }
             });
+            this.setState({todayTotalDuration: totalDuration});
+            this.setState({todayTotalStartingAmounts: totalStartingAmounts});
             this.setState({previousSessions: this.state.previousSessions.sort(this.sortSessionsByLatestDate)});
+            this.setState({totalNumSessions: totalNumSessions});
             this.setState({
                 error: '',
                 loading: false
             });
-            console.log("Leaving loadDataForAlerts");
             return 0;
         }).catch((error) => {
             this.setState({
@@ -274,20 +418,32 @@ export default class NewGamblingSession extends React.Component {
     }
 
     sortSessionsByLatestDate(a,b) {
-        if (new Date(a.date) > new Date(b.date))
+        if (new Date(a.date) > new Date(b.date)){
             return -1;
-        if (new Date(a.date) < new Date(b.date))
+        }
+        if (new Date(a.date) < new Date(b.date)){
             return 1;
+        }
+        if(a.startTime.split(':')[0] > b.startTime.split(':')[0]) {
+            return -1;
+        }
+        if(a.startTime.split(':')[0] < b.startTime.split(':')[0]) {
+            return 1;
+        }
+        if(a.startTime.split(':')[1] > b.startTime.split(':')[1]){
+            return -1;
+        }
+        if(a.startTime.split(':')[1] < b.startTime.split(':')[1]){
+            return 1;
+        }
         return 0;
     }
 
 
     alertDailyLimits() {
-        console.log("Entering alertDailyLimits");
-        console.log("this.state.todayTotalDuration");
-        console.log(this.state.todayTotalDuration);
+        this.setState({alertDailyLimit: null});
         const userPath = `/users/${this.state.user.uid}`;
-        firebase.database().ref(userPath).once('value').then((snapshot) => {
+        return firebase.database().ref(userPath).once('value').then((snapshot) => {
             const userSettings = snapshot.val();
             this.setState({
                 budgetLimit: userSettings.dailyLimit || '0',
@@ -295,7 +451,7 @@ export default class NewGamblingSession extends React.Component {
                 error: '',
                 loading: false
             });
-            const overBudget = (0 - this.state.budgetLimit) > this.state.todayTotalStartingAmounts;
+            const overBudget = this.state.budgetLimit < this.state.todayTotalStartingAmounts;
             const overTime = this.state.timeLimit < this.state.todayTotalDuration;
             console.log("overBudget: " + overBudget + " and overTime: " + overTime);
             if(overBudget && overTime) {
@@ -308,14 +464,17 @@ export default class NewGamblingSession extends React.Component {
                         title: "Daily budget exceeded",
                         message: "WARNING: You have exceeded your daily budget:\n" +
                             "Your daily budget is $" + this.state.budgetLimit + " and you have gambled $" + this.state.todayTotalStartingAmounts + " today.",
-                        buttons: [{text: "OK"}]}});
+                        buttons: [{text: "OK"}]
+                    }
+                });
             } else if(overTime) {
                 this.setState({alertDailyLimit: {
                         title: "Daily time limit exceeded",
                         message: "WARNING: You have exceeded your daily time limit:\n" +
                             "Your time limit is at " + this.state.timeLimit + " minutes and you spent " + this.state.todayTotalDuration + " minutes gambling today.",
                         buttons: [{text: "OK"}]
-                    }});
+                    }
+                });
             }
         }).catch((error) => {
             this.setState({
@@ -326,54 +485,71 @@ export default class NewGamblingSession extends React.Component {
     }
 
     alertNormativeFeedback() {
-        console.log("Entered Normativefeedback alert");
+        this.setState({alertNormativeFeedback: null});
         this.setState({
             error: '',
-            loading: false
+            loading: false,
         });
-        const freq = 5;
-        if(this.state.totalNumSessions === freq) {
-            let totalAmount = 0;
-            for(let i = 0; i < freq; i++) {
-                totalAmount += Number(this.state.previousSessions[i].startingAmount);
+        return Promise.resolve().then(() => {
+            const freq = 5;
+            if (this.state.totalNumSessions === freq) {
+                let totalAmount = 0;
+                for (let i = 0; i < freq; i++) {
+                    totalAmount += Number(this.state.previousSessions[i].startingAmount);
+                }
+                const averageAmount = totalAmount / freq;
+                if (averageAmount >= 50) {
+                    this.setState({
+                        alertNormativeFeedback: {
+                            title: "Information",
+                            message: "You have gambled " + freq + " times. People your age and gender tend to gamble around $" + Math.floor(0.75 * averageAmount) +
+                                " per session while you have gambled on average $" + averageAmount + ".",
+                            buttons: [{text: "OK"}]
+                        }
+                    });
+                }
+            } else if (this.state.totalNumSessions > freq && this.state.totalNumSessions % freq === 0) {
+                let totalMostRecent = 0;
+                let totalLeastRecent = 0;
+                for (let i = 0; i < freq; i++) {
+                    totalMostRecent += Number(this.state.previousSessions[i].startingAmount);
+                }
+                for (let i = freq; i < 2 * freq; i++) {
+                    totalLeastRecent += Number(this.state.previousSessions[i].startingAmount);
+                }
+                if (totalMostRecent > totalLeastRecent) {
+                    this.setState({
+                        alertNormativeFeedback: {
+                            title: "Slow down!",
+                            message: "You have gambled more ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                                " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                            buttons: [{text: "OK"}]
+                        }
+                    });
+                } else if (totalMostRecent < totalLeastRecent) {
+                    this.setState({
+                        alertNormativeFeedback: {
+                            title: "Good job!",
+                            message: "You have gambled less ($" + totalMostRecent + ") in the past " + freq + " sessions" +
+                                " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                            buttons: [{text: "OK"}]
+                        }
+                    });
+                } else {
+                    this.setState({
+                        alertNormativeFeedback: {
+                            title: "Just so you know ...",
+                            message: "You have gambled as much in the past " + freq + " sessions" +
+                                " than in the " + freq + " before that ($" + totalLeastRecent + ").",
+                            buttons: [{text: "OK"}]
+                        }
+                    });
+                }
             }
-            const averageAmount = totalAmount / freq;
-            if(averageAmount >= 50) {
-                console.log("first Normativefeedback alert > 50");
-                this.setState({alertNormativeFeedback: {
-                        title: "Information",
-                        message: "This is the second time you gamble. People your age and gender tend to gamble around $" + Math.floor(0.75 * averageAmount) +
-                            " per session while you have gambled on average $" + averageAmount + ".",
-                        buttons: [{text: "OK"}]
-                    }});
-            }
-        } else if(this.state.totalNumSessions > freq && this.state.totalNumSessions % freq === 0) {
-            let totalMostRecent = 0;
-            let totalLeastRecent = 0;
-            for(let i = 0; i < freq; i++) {
-                totalMostRecent += Number(this.state.previousSessions[i].startingAmount);
-            }
-            for(let i = freq; i < 2*freq; i++) {
-                totalLeastRecent += Number(this.state.previousSessions[i].startingAmount);
-            }
-            if(totalMostRecent > totalLeastRecent) {
-                console.log("gambling going up alert");
-                this.setState({alertNormativeFeedback: {
-                        title: "Slow down!",
-                        message: "You have gambled more ($" + totalMostRecent + ") in the past " + freq + " sessions" +
-                            " than in the " + freq + " before that ($" + totalLeastRecent + ").",
-                        buttons: [{text: "OK"}]
-                    }});
-            } else if(totalMostRecent < totalLeastRecent) {
-                console.log("gambling going down alert");
-                this.setState({alertNormativeFeedback: {
-                        title: "Good job!",
-                        message: "You have gambled less ($" + totalMostRecent + ") in the past " + freq + " sessions" +
-                            " than in the " + freq + " before that ($" + totalLeastRecent + ").",
-                        buttons: [{text: "OK"}]
-                    }});
-            }
-        }
+        })
+            .catch((error) => {
+                console.log('error in catch: ' + error);
+            });
     }
 
     async openAndroidStartTimePicker(){
@@ -496,8 +672,11 @@ export default class NewGamblingSession extends React.Component {
         return (
             <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
                 <ScrollView style={baseStyles.scrollViewContainer}>
+                    {this.state.editId !== null &&
+                    <Text style={baseStyles.updatingSessionTitle}>Updating existing session</Text>}
+
                     {this.modalStartDateComponent()}
-                    <View style={{ flex: 1, height: 50}}></View>
+                    <View style={{ flex: 1, height: 10}}></View>
                     {/*<Text style={baseStyles.welcomeMsg}>New Gambling Session</Text>*/}
                     {this._StartDatePickerComponent()}
                     <View style={{marginVertical: 5}}/>
@@ -526,6 +705,8 @@ export default class NewGamblingSession extends React.Component {
                                         <Picker
                                             prompt="Select a game mode"
                                             mode="dropdown"
+                                            // itemStyle={{backgroundColor: 'white'}}
+                                            style={{backgroundColor: 'white'}}
                                             selectedValue={this.state.gameMode}
                                             onValueChange={(itemValue, itemIndex) => this.setState({gameMode: itemValue})}>
                                             <Picker.Item style={baseStyles.whiteText} label="Select a game mode" value="" />
@@ -546,9 +727,10 @@ export default class NewGamblingSession extends React.Component {
                                         <Picker
                                             prompt="Select a game type"
                                             mode="dropdown"
+                                            style={{backgroundColor: 'white'}}
                                             selectedValue={this.state.gameType}
                                             onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
-                                            <Picker.Item style={baseStyles.whiteText} label="Select a game type" value="Select a game type" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Select a game type" value="" />
                                             <Picker.Item style={baseStyles.whiteText} label="Poker" value="Poker" />
                                             <Picker.Item style={baseStyles.whiteText} label="Blackjack" value="Blackjack" />
                                             <Picker.Item style={baseStyles.whiteText} label="Craps" value="Craps" />
@@ -562,21 +744,38 @@ export default class NewGamblingSession extends React.Component {
                             </View>
                         </View>
                     </View>
-                    <View style={baseStyles.signupButton}>
+                    <View style={[baseStyles.signupButton, {marginTop: 10}]}>
                         <Button style={baseStyles.signupButtonText}
                                 title="Save the new session"
                                 onPress={() => {
+
+                                    this.setState({
+                                        error: ''
+                                    });
                                     const value = this.refs.form.getValue();
                                     // Form has been validated
-                                    if (value) {
+                                    if(this.state.gameMode === '') {
+                                        this.setState({
+                                            error: 'Please select a game mode.'
+                                        });
+                                    } else if(this.state.gameType === ''){
+                                        this.setState({
+                                            error: 'Please select a game type.'
+                                        });
+                                    } else if (value) {
                                         this.setState({
                                             startAmount: value.StartAmount,
                                             endAmount: value.EndAmount,
                                             duration: value.Duration
                                         });
                                         setTimeout(() => {
-                                            this.saveNewGamblingSession();
-                                            this.clearForm();
+                                            if(this.state.editId === null){
+                                                this.saveNewGamblingSession();
+                                                this.clearForm();
+                                            } else {
+                                                this.saveUpdatedGamblingSession();
+                                            }
+
                                         }, 0);
                                     }
                                 }}
