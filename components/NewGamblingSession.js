@@ -67,19 +67,41 @@ const formStyles = {
         }
     }
 };
-let gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
-    'Lottery tickets/scratch cards', 'Other'];
-let gameModes = ['Online', 'Offline'];
 
 export default class NewGamblingSession extends React.Component {
 
-    gameTypes = ['Poker', 'Blackjack', 'Craps', 'Roulette', 'Slots', 'Sports wagering',
-        'Lottery tickets/scratch cards', 'Other'];
+    gameTypes = [
+        'Fantasy sports pool',
+        'Daily Fantasy sports',
+        'Poker',
+        'Bingo',
+        'Casino (Blackjack, Craps, Roulette, etc.)',
+        'VLTs/Slots',
+        'Card Games',
+        'Sports wagering',
+        'Horse races',
+        'Lottery tickets/scratch cards',
+        'Other'
+    ];
     gameModes = ['Online', 'Offline'];
 
     constructor(props) {
         super(props);
-
+        //avoid reinitializing firebase when it has already been done.
+        if (!firebase.apps.length) {
+            const config = {
+                apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
+                authDomain: "selfmonitoringgamblingapp.firebaseapp.com",
+                databaseURL: "https://selfmonitoringgamblingapp.firebaseio.com",
+                projectId: "selfmonitoringgamblingapp",
+                storageBucket: "selfmonitoringgamblingapp.appspot.com",
+                messagingSenderId: "91102348917"
+            };
+            firebase.initializeApp(config);
+            if(!firebase.auth().currentUser) {
+                this.props.navigation.navigate('Login');
+            }
+        }
         let valid_positive_number = FormValidation.refinement(
             FormValidation.Number, function (num ) {
                 // let num = Number(str);
@@ -119,6 +141,7 @@ export default class NewGamblingSession extends React.Component {
             endAmount: 0,
             gameMode: '',
             gameType: '',
+            gameTypeOther: '',
             userId: '',
             error: '',
             startDate: currentDateTime,
@@ -175,7 +198,8 @@ export default class NewGamblingSession extends React.Component {
         firebase.database().ref(gsPath).once('value').then((snapshot) => {
             const sess = snapshot.val();
             this.setState({
-                gameType: sess.game,
+                gameType: this.gameTypes.indexOf(sess.game) === -1 ? 'Other' : sess.game,
+                gameTypeOther: this.gameTypes.indexOf(sess.game) === -1 ? sess.game : '',
                 gameMode: sess.mode,
                 endAmount: sess.finalAmount,
                 startDate: new Date(sess.date.replace(/-/g, '\/')),
@@ -265,7 +289,7 @@ export default class NewGamblingSession extends React.Component {
             // endTime: lastEndDate.getHours() + ':' + lastEndDate.getMinutes(),
             finalAmount: this.state.endAmount,
             outcome: this.state.endAmount - this.state.startAmount,
-            game: this.state.gameType,
+            game: this.state.gameType === 'Other' ? this.state.gameTypeOther : this.state.gameType,
             key: newGamblingSessionRef,
             mode: this.state.gameMode,
             startTime: lastStartDate.getHours() + ':' + lastStartDate.getMinutes(),
@@ -354,7 +378,7 @@ export default class NewGamblingSession extends React.Component {
             // email: this.state.user.email,
             finalAmount: this.state.endAmount,
             outcome: this.state.endAmount - this.state.startAmount,
-            game: this.state.gameType,
+            game: this.state.gameType === 'Other' ? this.state.gameTypeOther : this.state.gameType,
             // key: newGamblingSessionRef,
             mode: this.state.gameMode,
             startTime: lastStartDate.getHours() + ':' + lastStartDate.getMinutes(),
@@ -742,6 +766,12 @@ export default class NewGamblingSession extends React.Component {
                                         </Picker>
                                 })}
                             </View>
+                            {this.state.gameType === 'Other' ?
+                                <TextInput style={[...Form.stylesheet.textbox.normal, {marginTop: 10, backgroundColor: 'white', padding: 10}]}
+                                           value={this.state.gameTypeOther}
+                                           placeholder='Please precise'
+                                           onChangeText={(gameTypeOther) => this.setState({gameTypeOther})}>
+                                </TextInput>: null}
                         </View>
                     </View>
                     <View style={[baseStyles.signupButton, {marginTop: 10}]}>
@@ -761,6 +791,10 @@ export default class NewGamblingSession extends React.Component {
                                     } else if(this.state.gameType === ''){
                                         this.setState({
                                             error: 'Please select a game type.'
+                                        });
+                                    }  else if(this.state.gameType === 'Other' && this.state.gameTypeOther === ''){
+                                        this.setState({
+                                            error: 'Please precise which type if you select Other.'
                                         });
                                     } else if (value) {
                                         this.setState({

@@ -93,7 +93,7 @@ class Advice extends React.Component {
 
     _renderItem ({item, index}) {
         return (
-            <ScrollView key={index} style={baseStyles.scrollViewContainer}>
+            <ScrollView key={index} style={[baseStyles.scrollViewContainer, {padding: 10}]}>
                 <Text style={baseStyles.adviceTitles}>{ item.title }</Text>
                 <Text style={baseStyles.adviceText}>{ item.text }</Text>
             </ScrollView>

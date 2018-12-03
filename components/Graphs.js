@@ -11,6 +11,21 @@ class Graphs extends React.Component {
 
     constructor(props) {
         super(props);
+        //avoid reinitializing firebase when it has already been done.
+        if (!firebase.apps.length) {
+            const config = {
+                apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
+                authDomain: "selfmonitoringgamblingapp.firebaseapp.com",
+                databaseURL: "https://selfmonitoringgamblingapp.firebaseio.com",
+                projectId: "selfmonitoringgamblingapp",
+                storageBucket: "selfmonitoringgamblingapp.appspot.com",
+                messagingSenderId: "91102348917"
+            };
+            firebase.initializeApp(config);
+            if(!firebase.auth().currentUser) {
+                this.props.navigation.navigate('Login');
+            }
+        }
         this.state = {
             error: '',
             loading: true,
@@ -98,7 +113,7 @@ class Graphs extends React.Component {
         const xAxisHeight = 30;
         return <View style={baseStyles.container}>
 
-            <Text style={baseStyles.welcomeMsg}>Graph of your last sessions</Text>
+            <Text style={baseStyles.welcomeMsg}>Graph of your 5 last sessions</Text>
             <View style={baseStyles.textInputView}>
                 {/*TODO: for ios, it should be a button, with a modal that opens onPress, and inside that modal the 'Picker'*/}
                 {Platform.select({

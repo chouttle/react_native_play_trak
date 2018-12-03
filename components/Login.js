@@ -2,6 +2,7 @@ import React from 'react';
 import * as firebase from 'firebase';
 import '../assets/dices.png';
 import {
+    Alert,
     AsyncStorage,
     Text,
     TextInput,
@@ -125,7 +126,7 @@ export default class LoginPage extends React.Component {
             form_options: this.getFormOptions()
         }
     }
-    
+
     getFormOptions () {
         let form_options =  {
             fields: {
@@ -163,11 +164,31 @@ export default class LoginPage extends React.Component {
         });
     };
 
+    resetPassword(){
+        this.setState({
+            error: '',
+            loading: true
+        });
+        firebase.auth().sendPasswordResetEmail(this.state.email).then(() => {
+            this.setState({
+                error: 'Successful',
+                loading: false
+            });
+            Alert.alert('Success!', 'An email was sent to you with a link to reset your password.');
+        }).catch((error) => {
+            this.setState({
+                error: 'Could not reset: ' + error,
+                loading: false
+            });
+            Alert.alert('Error', 'An error was received while trying to send you a link to reset your password: ' + error);
+        });
+    };
+
     render() {
         return (
             <KeyboardAvoidingView style={{flex: 1}} keyboardVerticalOffset={65} behavior="padding" enabled>
                 <ScrollView style={baseStyles.scrollViewContainer}>
-                <Text style={baseStyles.titleMsg}>Play & Trak
+                    <Text style={baseStyles.titleMsg}>Play & Trak
                     </Text>
                     <View style={{ justifyContent: 'center', alignItems: 'center'}}>
                         <Image style={{ flexShrink: 1}}
@@ -204,7 +225,26 @@ export default class LoginPage extends React.Component {
                                 title="Register"
                                 onPress={() => {this.props.navigation.navigate('Register');}}
                         />
-                        
+                        <Text style={baseStyles.noAccountText}>Forgot your password? Please enter your email above</Text>
+                        <Button style={baseStyles.signupButtonText}
+                                title="Email me a reset link"
+                                onPress={() => {
+                                    const value = this.state.form_values.Email;
+                                    console.log(this.state.form_values.Email);
+                                    // Form has been validated
+                                    if (value) {
+                                        this.setState({
+                                            email: value
+                                        });
+                                        setTimeout(() => {
+                                            this.resetPassword();
+                                        }, 0);
+                                    } else {
+                                        Alert.alert('Please enter a valid email', 'Please enter a valid email before clicking on the button to reset your password.');
+                                    }
+                                }}
+                        />
+
                         <Text style={baseStyles.errorText}> {this.state.error}</Text>
                     </View>
                 </ScrollView>

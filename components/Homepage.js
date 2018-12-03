@@ -1,5 +1,5 @@
 import React from 'react';
-import {ActivityIndicator, ScrollView, Text, View} from 'react-native';
+import {ActivityIndicator, AsyncStorage, ScrollView, Text, View} from 'react-native';
 import firebase from 'firebase';
 const baseStyles = require('../styles/baseStyles');
 
@@ -8,6 +8,23 @@ class Homepage extends React.Component {
     constructor(props) {
         super(props);
         const { params } = this.props.navigation.state;
+
+        //avoid reinitializing firebase when it has already been done.
+        if (!firebase.apps.length) {
+            const config = {
+                apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
+                authDomain: "selfmonitoringgamblingapp.firebaseapp.com",
+                databaseURL: "https://selfmonitoringgamblingapp.firebaseio.com",
+                projectId: "selfmonitoringgamblingapp",
+                storageBucket: "selfmonitoringgamblingapp.appspot.com",
+                messagingSenderId: "91102348917"
+            };
+            firebase.initializeApp(config);
+            if(!firebase.auth().currentUser) {
+                console.log('navigating to Auth');
+                this.props.navigation.navigate('Auth');
+            }
+        }
         this.state = {
             user: firebase.auth().currentUser,
             currentBalance: '?',
@@ -110,12 +127,12 @@ class Homepage extends React.Component {
         return (
             <View style={baseStyles.container}>
                 <Text style={baseStyles.homeText}>Overview</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Current balance</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.currentBalance}</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Max amount won: {this.state.maxWon}</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Max amount lost: {this.state.maxLost}</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>Total playing time: {this.state.totalPlayingTime}</Text>
-                <Text style={[baseStyles.centeredText, baseStyles.whiteText]}>{this.state.error}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>Current balance</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>{this.state.currentBalance}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>Max amount won: {this.state.maxWon}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>Max amount lost: {this.state.maxLost}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>Total playing time: {this.state.totalPlayingTime}</Text>
+                <Text style={[baseStyles.centeredText, baseStyles.whiteText, baseStyles.homepageText]}>{this.state.error}</Text>
                 {this.state.loading &&
                 <View style={baseStyles.loading}>
                     <ActivityIndicator size='large' />

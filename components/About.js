@@ -27,11 +27,11 @@ class About extends React.Component {
                     </View>
                     <Text style={baseStyles.homeText}>About Us</Text>
                     <View style={{marginHorizontal: '10%'}}>
-                        <Text style={baseStyles.whiteText}>
+                        <Text style={[baseStyles.whiteText, baseStyles.aboutText]}>
                             For over 20 years, the International Center for Youth Gambling Problems and High-Risk Behaviours at McGill University has been at the forefront of leading-edge research aimed at identifying and understanding the critical factors related to youth gambling issues.
                             In Addition to its many research endeavors, the center also provides treatment for youth experiencing gambling problems.{'\n'}
                         </Text>
-                        <Text style={baseStyles.whiteText}>
+                        <Text style={[baseStyles.whiteText, baseStyles.aboutText]}>
                             For more information, visit us on our website:&nbsp;
                             <Text style={{color: 'blue'}} onPress={() => Linking.openURL('http://www.youthgambling.com')}>
                                 http://www.youthgambling.com

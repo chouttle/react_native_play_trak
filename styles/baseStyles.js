@@ -142,8 +142,18 @@ module.exports = StyleSheet.create({
         textAlign: 'center',
         marginHorizontal: 30,
         marginVertical: 30,
-        fontSize: 16,
+        fontSize: 18,
         color: 'white'
+    },
+    aboutText: {
+        textAlign: 'left',
+        // marginHorizontal: 5,
+        // marginVertical: 5,
+        fontSize: 18,
+        color: 'white'
+    },
+    homepageText: {
+        fontSize: 18
     },
     loading: {
         position: 'absolute',

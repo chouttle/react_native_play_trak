@@ -76,6 +76,21 @@ export default class Registration extends React.Component {
 
     constructor(props) {
         super(props);
+        //avoid reinitializing firebase when it has already been done.
+        if (!firebase.apps.length) {
+            const config = {
+                apiKey: "AIzaSyChhft1gQMOt5BmfObjtaAg-sel9nGoBHE",
+                authDomain: "selfmonitoringgamblingapp.firebaseapp.com",
+                databaseURL: "https://selfmonitoringgamblingapp.firebaseio.com",
+                projectId: "selfmonitoringgamblingapp",
+                storageBucket: "selfmonitoringgamblingapp.appspot.com",
+                messagingSenderId: "91102348917"
+            };
+            firebase.initializeApp(config);
+            if(!firebase.auth().currentUser) {
+                this.props.navigation.navigate('Login');
+            }
+        }
         // Email Validation
         let valid_email = FormValidation.refinement(
             FormValidation.String, function (email) {
