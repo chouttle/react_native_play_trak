@@ -74,10 +74,11 @@ export default class NewGamblingSession extends React.Component {
         'Fantasy sports pool',
         'Daily Fantasy sports',
         'Poker',
+        'Other Card Games',
+        'Games of skills (darts, pools, etc.)',
         'Bingo',
         'Casino (Blackjack, Craps, Roulette, etc.)',
         'VLTs/Slots',
-        'Card Games',
         'Sports wagering',
         'Horse races',
         'Lottery tickets/scratch cards',
@@ -754,13 +755,17 @@ export default class NewGamblingSession extends React.Component {
                                             style={{backgroundColor: 'white'}}
                                             selectedValue={this.state.gameType}
                                             onValueChange={(itemValue, itemIndex) => this.setState({gameType: itemValue})}>
-                                            <Picker.Item style={baseStyles.whiteText} label="Select a game type" value="" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Select a game type" value="Select a game type" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Fantasy sports pool" value="Fantasy sports pool" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Daily Fantasy sports" value="Daily Fantasy sports" />
                                             <Picker.Item style={baseStyles.whiteText} label="Poker" value="Poker" />
-                                            <Picker.Item style={baseStyles.whiteText} label="Blackjack" value="Blackjack" />
-                                            <Picker.Item style={baseStyles.whiteText} label="Craps" value="Craps" />
-                                            <Picker.Item style={baseStyles.whiteText} label="Roulette" value="Roulette" />
-                                            <Picker.Item style={baseStyles.whiteText} label="Slots" value="Slots" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Other Card Games" value="Other Card Games" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Games of skills (darts, pools, etc.)" value="Games of skills (darts, pools, etc.)" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Bingo" value="Bingo" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Casino (Blackjack, Craps, Roulette, etc.)" value="Casino (Blackjack, Craps, Roulette, etc.)" />
+                                            <Picker.Item style={baseStyles.whiteText} label="VLTs/Slots" value="VLTs/Slots" />
                                             <Picker.Item style={baseStyles.whiteText} label="Sports wagering" value="Sports wagering" />
+                                            <Picker.Item style={baseStyles.whiteText} label="Horse races" value="Horse races" />
                                             <Picker.Item style={baseStyles.whiteText} label="Lottery tickets/scratch cards" value="Lottery tickets/scratch cards" />
                                             <Picker.Item style={baseStyles.whiteText} label="Other" value="Other" />
                                         </Picker>
@@ -769,7 +774,7 @@ export default class NewGamblingSession extends React.Component {
                             {this.state.gameType === 'Other' ?
                                 <TextInput style={[...Form.stylesheet.textbox.normal, {marginTop: 10, backgroundColor: 'white', padding: 10}]}
                                            value={this.state.gameTypeOther}
-                                           placeholder='Please precise'
+                                           placeholder='Please specify'
                                            onChangeText={(gameTypeOther) => this.setState({gameTypeOther})}>
                                 </TextInput>: null}
                         </View>
@@ -794,7 +799,7 @@ export default class NewGamblingSession extends React.Component {
                                         });
                                     }  else if(this.state.gameType === 'Other' && this.state.gameTypeOther === ''){
                                         this.setState({
-                                            error: 'Please precise which type if you select Other.'
+                                            error: 'Please specify which type if you select Other.'
                                         });
                                     } else if (value) {
                                         this.setState({
